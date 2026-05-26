@@ -30,16 +30,36 @@ const initialFormData = {
   title: "",
   amount: "",
   type: "expense",
-  category: "",
+  category: "Food",
+  customCategory: "",
   date: "",
 };
+const incomeCategories = [
+  "Salary",
+  "Freelance",
+  "Business",
+  "Investment",
+  "Bonus",
+  "Other",
+];
+
+const expenseCategories = [
+  "Food",
+  "Travel",
+  "Shopping",
+  "Bills",
+  "Entertainment",
+  "Healthcare",
+  "Education",
+  "Savings",
+  "Other",
+];
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
-  const [pendingDeleteId, setPendingDeleteId] =
-    useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [formData, setFormData] = useState(initialFormData);
 
   const loadTransactions = async () => {
@@ -90,9 +110,22 @@ function Transactions() {
   }, [search, transactions]);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "type") {
+      setFormData({
+        ...formData,
+        type: value,
+        category: value === "income" ? "Salary" : "Food",
+        customCategory: "",
+      });
+
+      return;
+    }
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -104,8 +137,19 @@ function Transactions() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const finalCategory =
+      formData.category === "Other"
+        ? formData.customCategory.trim()
+        : formData.category;
+
+    if (!finalCategory) {
+      notifyWarning("Please enter a custom category.");
+      return;
+    }
+
     const payload = {
       ...formData,
+      category: finalCategory,
       amount: Number(formData.amount),
     };
 
@@ -126,11 +170,17 @@ function Transactions() {
   };
 
   const handleEdit = (transaction) => {
+    const predefinedCategories =
+      transaction.type === "income" ? incomeCategories : expenseCategories;
+
+    const isCustom = !predefinedCategories.includes(transaction.category);
+
     setFormData({
       title: transaction.title,
       amount: transaction.amount,
       type: transaction.type,
-      category: transaction.category,
+      category: isCustom ? "Other" : transaction.category,
+      customCategory: isCustom ? transaction.category : "",
       date: transaction.date,
     });
 
@@ -184,9 +234,7 @@ function Transactions() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-[var(--text)]">
-                {editingId
-                  ? "Update transaction"
-                  : "Add transaction"}
+                {editingId ? "Update transaction" : "Add transaction"}
               </h2>
               <p className="text-sm text-[var(--muted-text)]">
                 Keep your cash flow ledger current.
@@ -194,10 +242,7 @@ function Transactions() {
             </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               name="title"
@@ -216,14 +261,31 @@ function Transactions() {
               className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             />
 
-            <input
-              type="text"
+            <select
               name="category"
-              placeholder="Category"
               value={formData.category}
               onChange={handleChange}
               className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
-            />
+            >
+              {(formData.type === "income"
+                ? incomeCategories
+                : expenseCategories
+              ).map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+            {formData.category === "Other" && (
+              <input
+                type="text"
+                name="customCategory"
+                placeholder="Custom Category"
+                value={formData.customCategory}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
+              />
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
               <select
@@ -253,9 +315,7 @@ function Transactions() {
                 type="submit"
                 className="rounded-2xl bg-[#F97316] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600"
               >
-                {editingId
-                  ? "Update Transaction"
-                  : "Add Transaction"}
+                {editingId ? "Update Transaction" : "Add Transaction"}
               </motion.button>
 
               {editingId && (
@@ -370,9 +430,7 @@ function Transactions() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setPendingDeleteId(transaction.id)
-                      }
+                      onClick={() => setPendingDeleteId(transaction.id)}
                       className="rounded-xl border border-rose-200 p-2 text-rose-600 transition hover:bg-rose-50"
                     >
                       <Trash2 size={17} />
