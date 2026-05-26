@@ -45,3 +45,33 @@ export const deleteGoal = async (
 
   return response.data;
 };
+
+export const createGoalContribution = async (
+  goalId,
+  contribution
+) => {
+  const response = await api.post(
+    `/goals/${goalId}/contributions`,
+    contribution
+  );
+
+  return response.data;
+};
+
+export const getGoalContributions = async (
+  goalId
+) => {
+  const response = await api.get(
+    `/goals/${goalId}/contributions`
+  );
+
+  return response.data;
+};
+
+export const getAllGoalContributions = async () => {
+  const response = await api.get(
+    "/goals/contributions/history/all"
+  );
+
+  return response.data;
+};

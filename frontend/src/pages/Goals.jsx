@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 import {
   CheckCircle2,
   Edit3,
+  History,
   Plus,
   Target,
   Trash2,
+  Wallet,
 } from "lucide-react";
 
 import AnimatedCard from "../components/ui/AnimatedCard";
@@ -19,6 +21,8 @@ import {
   deleteGoal,
   getGoals,
   getGoalProgress,
+  createGoalContribution,
+  getGoalContributions,
 } from "../services/goalService";
 import { formatCurrency } from "../utils/formatters";
 import {
@@ -30,7 +34,6 @@ import {
 const initialFormData = {
   goal_name: "",
   target_amount: "",
-  current_amount: "",
   target_date: "",
 };
 
@@ -40,6 +43,15 @@ function Goals() {
   const [editingId, setEditingId] = useState(null);
   const [pendingDeleteId, setPendingDeleteId] =
     useState(null);
+  const [contributionGoal, setContributionGoal] =
+    useState(null);
+  const [contributionAction, setContributionAction] =
+    useState("add");
+  const [contributionAmount, setContributionAmount] =
+    useState("");
+  const [historyGoal, setHistoryGoal] = useState(null);
+  const [contributionHistory, setContributionHistory] =
+    useState([]);
   const [formData, setFormData] = useState(initialFormData);
 
   const loadGoals = async () => {
@@ -109,7 +121,6 @@ function Goals() {
     const payload = {
       goal_name: formData.goal_name,
       target_amount: Number(formData.target_amount),
-      current_amount: Number(formData.current_amount),
       target_date: formData.target_date,
     };
 
@@ -137,7 +148,6 @@ function Goals() {
     setFormData({
       goal_name: goal.goal_name,
       target_amount: goal.target_amount,
-      current_amount: goal.current_amount,
       target_date: goal.target_date,
     });
 
@@ -160,6 +170,57 @@ function Goals() {
   const cancelDelete = () => {
     setPendingDeleteId(null);
     notifyWarning("Goal deletion cancelled.");
+  };
+
+  const openContributionModal = (goal, action) => {
+    setContributionGoal(goal);
+    setContributionAction(action);
+    setContributionAmount("");
+  };
+
+  const closeContributionModal = () => {
+    setContributionGoal(null);
+    setContributionAmount("");
+  };
+
+  const handleContributionSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!contributionGoal) return;
+
+    try {
+      await createGoalContribution(contributionGoal.id, {
+        action: contributionAction,
+        amount: Number(contributionAmount),
+      });
+
+      notifySuccess(
+        contributionAction === "add"
+          ? "Savings added successfully"
+          : "Savings withdrawn successfully"
+      );
+
+      closeContributionModal();
+      loadGoals();
+    } catch (error) {
+      notifyError(error, "Failed to save contribution.");
+    }
+  };
+
+  const openHistoryModal = async (goal) => {
+    setHistoryGoal(goal);
+
+    try {
+      const history = await getGoalContributions(goal.id);
+      setContributionHistory(history);
+    } catch (error) {
+      notifyError(error, "Failed to load contribution history.");
+    }
+  };
+
+  const closeHistoryModal = () => {
+    setHistoryGoal(null);
+    setContributionHistory([]);
   };
 
   return (
@@ -194,7 +255,7 @@ function Goals() {
                 {editingId ? "Update goal" : "Create goal"}
               </h2>
               <p className="text-sm text-[var(--muted-text)]">
-                Track target date and saved progress.
+                Track target date. Savings progress is updated through contributions.
               </p>
             </div>
           </div>
@@ -223,19 +284,6 @@ function Goals() {
                 setFormData({
                   ...formData,
                   target_amount: e.target.value,
-                })
-              }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#14B8A6] focus:ring-4 focus:ring-teal-500/10"
-            />
-
-            <input
-              type="number"
-              placeholder="Current Amount"
-              value={formData.current_amount}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  current_amount: e.target.value,
                 })
               }
               className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#14B8A6] focus:ring-4 focus:ring-teal-500/10"
@@ -361,7 +409,36 @@ function Goals() {
                       </span>
                     </div>
 
-                    <div className="mt-5 flex gap-2">
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openContributionModal(goal, "add")
+                        }
+                        className="rounded-xl bg-[#14B8A6] px-3 py-2 text-xs font-bold text-white transition hover:bg-teal-600"
+                      >
+                        Add Savings
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openContributionModal(goal, "withdraw")
+                        }
+                        className="rounded-xl bg-[#FFF4EC] px-3 py-2 text-xs font-bold text-[#F97316] transition hover:bg-orange-100"
+                      >
+                        Withdraw Savings
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openHistoryModal(goal)}
+                        className="rounded-xl border border-[var(--card-border)] p-2 text-[var(--muted-text)] transition hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
+                        title="Contribution history"
+                      >
+                        <History size={17} />
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => handleEdit(goal.id)}
@@ -394,6 +471,141 @@ function Goals() {
         onConfirm={handleDelete}
         onCancel={cancelDelete}
       />
+
+      {contributionGoal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
+          <motion.div
+            initial={{
+              opacity: 0,
+              scale: 0.96,
+              y: 12,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+            }}
+            className="w-full max-w-md rounded-3xl bg-[var(--card-bg)] p-6 shadow-2xl"
+          >
+            <div className="mb-5 flex items-center gap-3">
+              <div className="rounded-2xl bg-[#EAFBF8] p-3 text-[#14B8A6]">
+                <Wallet size={22} />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-[var(--text)]">
+                  {contributionAction === "add"
+                    ? "Add Savings"
+                    : "Withdraw Savings"}
+                </h2>
+                <p className="text-sm text-[var(--muted-text)]">
+                  {contributionGoal.goal_name}
+                </p>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleContributionSubmit}
+              className="space-y-4"
+            >
+              <input
+                type="number"
+                min="1"
+                placeholder="Amount"
+                value={contributionAmount}
+                onChange={(e) =>
+                  setContributionAmount(e.target.value)
+                }
+                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#14B8A6] focus:ring-4 focus:ring-teal-500/10"
+              />
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeContributionModal}
+                  className="rounded-2xl border border-[var(--card-border)] px-5 py-3 text-sm font-bold text-[var(--text)] transition hover:bg-[var(--muted-bg)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-[#14B8A6] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition hover:bg-teal-600"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {historyGoal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
+          <motion.div
+            initial={{
+              opacity: 0,
+              scale: 0.96,
+              y: 12,
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+            }}
+            className="w-full max-w-2xl rounded-3xl bg-[var(--card-bg)] p-6 shadow-2xl"
+          >
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--text)]">
+                  Contribution History
+                </h2>
+                <p className="text-sm text-[var(--muted-text)]">
+                  {historyGoal.goal_name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeHistoryModal}
+                className="rounded-2xl border border-[var(--card-border)] px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-[var(--muted-bg)]"
+              >
+                Close
+              </button>
+            </div>
+
+            {contributionHistory.length === 0 ? (
+              <EmptyState
+                icon={History}
+                title="No contributions yet"
+                description="Add or withdraw savings to build this goal history."
+              />
+            ) : (
+              <div className="max-h-96 overflow-auto rounded-3xl border border-[var(--card-border)]">
+                {contributionHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid gap-3 border-b border-[var(--card-border)] p-4 last:border-b-0 sm:grid-cols-[1fr_auto_auto]"
+                  >
+                    <span
+                      className={`font-bold capitalize ${
+                        item.action === "add"
+                          ? "text-emerald-600"
+                          : "text-rose-600"
+                      }`}
+                    >
+                      {item.action}
+                    </span>
+                    <span className="text-sm text-[var(--muted-text)]">
+                      {item.created_at}
+                    </span>
+                    <span className="font-bold text-[var(--text)]">
+                      {formatCurrency(item.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
     </motion.main>
   );
 }
