@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.models.budget import Budget
 from app.database.dependencies import get_db
+from app.models.goal_contribution import GoalContribution
 from app.models.transaction import Transaction
 import pandas as pd
 from app.services.analytics_service import (
@@ -12,6 +13,15 @@ router = APIRouter(
     prefix="/ai",
     tags=["AI Insights"]
 )
+
+
+def goal_transaction_ids(db: Session):
+    return (
+        db.query(GoalContribution.transaction_id)
+        .filter(GoalContribution.transaction_id.isnot(None))
+    )
+
+
 @router.get("/top-categories")
 def top_categories(
     db: Session = Depends(get_db)
@@ -19,7 +29,10 @@ def top_categories(
 
     transactions = (
         db.query(Transaction)
-        .filter(Transaction.type == "expense")
+        .filter(
+            Transaction.type == "expense",
+            ~Transaction.id.in_(goal_transaction_ids(db))
+        )
         .all()
     )
 
@@ -55,7 +68,10 @@ def spending_breakdown(
 
     transactions = (
         db.query(Transaction)
-        .filter(Transaction.type == "expense")
+        .filter(
+            Transaction.type == "expense",
+            ~Transaction.id.in_(goal_transaction_ids(db))
+        )
         .all()
     )
 
@@ -91,7 +107,8 @@ def recommendations(
             db.query(Transaction)
             .filter(
                 Transaction.type == "expense",
-                Transaction.category == budget.category
+                Transaction.category == budget.category,
+                ~Transaction.id.in_(goal_transaction_ids(db))
             )
             .all()
         )
@@ -138,7 +155,10 @@ def monthly_trend(
 ):
     transactions = (
         db.query(Transaction)
-        .filter(Transaction.type == "expense")
+        .filter(
+            Transaction.type == "expense",
+            ~Transaction.id.in_(goal_transaction_ids(db))
+        )
         .all()
     )
 
@@ -172,7 +192,10 @@ def ai_summary(
 ):
     transactions = (
         db.query(Transaction)
-        .filter(Transaction.type == "expense")
+        .filter(
+            Transaction.type == "expense",
+            ~Transaction.id.in_(goal_transaction_ids(db))
+        )
         .all()
     )
 

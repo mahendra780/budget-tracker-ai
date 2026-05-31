@@ -61,6 +61,7 @@ function Dashboard() {
   const [summary, setSummary] = useState({
     total_income: 0,
     total_expense: 0,
+    goal_savings: 0,
     balance: 0,
   });
   const [topCategory, setTopCategory] = useState(null);
@@ -130,16 +131,6 @@ function Dashboard() {
       isMounted = false;
     };
   }, []);
-
-  const totalSavings = useMemo(
-    () =>
-      goals.reduce(
-        (total, goal) =>
-          total + Number(goal.current_amount || 0),
-        0
-      ),
-    [goals]
-  );
 
   const recentTransactions = useMemo(() => {
     return [...transactions]
@@ -218,11 +209,11 @@ function Dashboard() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          title="Current Balance"
+          title="Available Balance"
           value={summary.balance}
           icon={Wallet}
           tone="primary"
-          helper="Income minus expenses"
+          helper="Income minus expenses and goals"
           delay={0.02}
         />
         <StatCard
@@ -242,8 +233,8 @@ function Dashboard() {
           delay={0.1}
         />
         <StatCard
-          title="Total Savings"
-          value={totalSavings}
+          title="Goal Savings"
+          value={summary.goal_savings}
           icon={PiggyBank}
           tone="secondary"
           helper="Saved across goals"

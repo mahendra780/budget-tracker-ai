@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database.dependencies import get_db
+from app.models.goal import Goal
+from app.models.goal_contribution import GoalContribution
 from app.models.transaction import Transaction
 from app.schemas.transaction import (
     TransactionCreate,
@@ -35,35 +37,58 @@ def create_transaction(
     return new_transaction
 @router.get("/summary")
 def get_summary(db: Session = Depends(get_db)):
+    goal_transaction_ids = (
+        db.query(GoalContribution.transaction_id)
+        .filter(GoalContribution.transaction_id.isnot(None))
+    )
 
     total_income = (
         db.query(func.sum(Transaction.amount))
-        .filter(Transaction.type == "income")
+        .filter(
+            Transaction.type == "income",
+            ~Transaction.id.in_(goal_transaction_ids)
+        )
         .scalar()
     ) or 0
 
     total_expense = (
         db.query(func.sum(Transaction.amount))
-        .filter(Transaction.type == "expense")
+        .filter(
+            Transaction.type == "expense",
+            ~Transaction.id.in_(goal_transaction_ids)
+        )
         .scalar()
     ) or 0
 
-    balance = total_income - total_expense
+    goal_savings = (
+        db.query(func.sum(Goal.current_amount))
+        .scalar()
+    ) or 0
+
+    balance = total_income - total_expense - goal_savings
 
     return {
         "total_income": total_income,
         "total_expense": total_expense,
+        "goal_savings": goal_savings,
         "balance": balance
     }
 @router.get("/category-summary")
 def category_summary(db: Session = Depends(get_db)):
+    goal_transaction_ids = (
+        db.query(GoalContribution.transaction_id)
+        .filter(GoalContribution.transaction_id.isnot(None))
+    )
 
     results = (
         db.query(
             Transaction.category,
             func.sum(Transaction.amount)
         )
-        .filter(Transaction.type == "expense")
+        .filter(
+            Transaction.type == "expense",
+            ~Transaction.id.in_(goal_transaction_ids)
+        )
         .group_by(Transaction.category)
         .all()
     )

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import date
 
@@ -175,28 +176,55 @@ def create_goal_contribution(
             detail="Invalid contribution amount"
         )
 
-    if action == "withdraw" and contribution.amount > goal.current_amount:
-        raise HTTPException(
-            status_code=400,
-            detail="Insufficient savings"
+    if action == "add":
+        goal_transaction_ids = (
+            db.query(GoalContribution.transaction_id)
+            .filter(GoalContribution.transaction_id.isnot(None))
         )
 
+        total_income = (
+            db.query(func.sum(Transaction.amount))
+            .filter(
+                Transaction.type == "income",
+                ~Transaction.id.in_(goal_transaction_ids)
+            )
+            .scalar()
+        ) or 0
+
+        total_expense = (
+            db.query(func.sum(Transaction.amount))
+            .filter(
+                Transaction.type == "expense",
+                ~Transaction.id.in_(goal_transaction_ids)
+            )
+            .scalar()
+        ) or 0
+
+        goal_savings = (
+            db.query(func.sum(Goal.current_amount))
+            .scalar()
+        ) or 0
+
+        available_balance = (
+            total_income
+            - total_expense
+            - goal_savings
+        )
+
+        if contribution.amount > available_balance:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient Balance"
+            )
+
+    if action == "withdraw":
+        if contribution.amount > goal.current_amount:
+            raise HTTPException(
+                status_code=400,
+                detail="Insufficient Goal Savings"
+            )
+
     today = date.today()
-
-    transaction = Transaction(
-        title=(
-            f"Goal Contribution - {goal.goal_name}"
-            if action == "add"
-            else f"Goal Withdrawal - {goal.goal_name}"
-        ),
-        amount=contribution.amount,
-        type="expense" if action == "add" else "income",
-        category="Savings",
-        date=today
-    )
-
-    db.add(transaction)
-    db.flush()
 
     if action == "add":
         goal.current_amount += contribution.amount
@@ -209,7 +237,7 @@ def create_goal_contribution(
         action=action,
         date=today,
         created_at=today,
-        transaction_id=transaction.id
+        transaction_id=None
     )
 
     db.add(new_contribution)
