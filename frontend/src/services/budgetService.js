@@ -20,6 +20,13 @@ export const getBudgetStatus = async () => {
   return response.data;
 };
 
+export const getBudgetHistory = async () => {
+  const response = await api.get(
+    "/budgets/history"
+  );
+  return response.data;
+};
+
 export const updateBudget = async (
   id,
   budget

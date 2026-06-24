@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
+  CalendarClock,
   Edit3,
+  Pause,
+  Play,
   Plus,
+  RefreshCcw,
   Repeat,
   Trash2,
 } from "lucide-react";
@@ -15,6 +19,8 @@ import {
   createRecurringTransaction,
   deleteRecurringTransaction,
   getRecurringTransactions,
+  getUpcomingRecurringTransactions,
+  processRecurringTransactions,
   toggleRecurringTransaction,
   updateRecurringTransaction,
 } from "../services/recurringService";
@@ -35,22 +41,34 @@ const initialForm = {
   type: "expense",
   category: "",
   customCategory: "",
-  frequency: "Monthly",
-  next_due_date: "",
-  is_active: true,
+  frequency: "monthly",
+  start_date: "",
+  end_date: "",
+  active: true,
 };
+
+const formatDate = (value) => value || "Not set";
+
+const titleCase = (value) =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
 
 function RecurringTransactions() {
   const [items, setItems] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
   const [formData, setFormData] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
-  const [pendingDeleteId, setPendingDeleteId] =
-    useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [processing, setProcessing] = useState(false);
 
   const loadItems = async () => {
     try {
-      const data = await getRecurringTransactions();
-      setItems(data);
+      const [itemData, upcomingData] = await Promise.all([
+        getRecurringTransactions(),
+        getUpcomingRecurringTransactions(),
+      ]);
+
+      setItems(itemData);
+      setUpcoming(upcomingData);
     } catch (error) {
       notifyError(error, "Failed to load recurring transactions.");
     }
@@ -68,18 +86,32 @@ function RecurringTransactions() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const category = resolveCategory(
+      formData.category,
+      formData.customCategory
+    );
+
+    if (!category) {
+      notifyWarning("Please choose or enter a category.");
+      return;
+    }
+
     const payload = {
       title: formData.title,
       amount: Number(formData.amount),
       type: formData.type,
-      category: resolveCategory(
-        formData.category,
-        formData.customCategory
-      ),
+      category,
       frequency: formData.frequency,
-      next_due_date: formData.next_due_date,
-      is_active: formData.is_active,
+      start_date: formData.start_date,
+      end_date: formData.end_date || null,
+      active: formData.active,
     };
+
+    if (editingId) {
+      const currentItem = items.find((item) => item.id === editingId);
+      payload.last_processed_date =
+        currentItem?.last_processed_date || null;
+    }
 
     try {
       if (editingId) {
@@ -108,8 +140,9 @@ function RecurringTransactions() {
       category: isKnownCategory ? item.category : "Other",
       customCategory: isKnownCategory ? "" : item.category,
       frequency: item.frequency,
-      next_due_date: item.next_due_date,
-      is_active: item.is_active,
+      start_date: item.start_date,
+      end_date: item.end_date || "",
+      active: item.active,
     });
     setEditingId(item.id);
   };
@@ -121,6 +154,23 @@ function RecurringTransactions() {
       loadItems();
     } catch (error) {
       notifyError(error, "Failed to update recurring status.");
+    }
+  };
+
+  const handleProcess = async () => {
+    try {
+      setProcessing(true);
+      const result = await processRecurringTransactions();
+      notifySuccess(
+        `${result.generated_count} recurring transaction${
+          result.generated_count === 1 ? "" : "s"
+        } generated.`
+      );
+      loadItems();
+    } catch (error) {
+      notifyError(error, "Failed to process recurring transactions.");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -154,7 +204,7 @@ function RecurringTransactions() {
       <PageHeader
         eyebrow="Autopay system"
         title="Recurring Transactions"
-        description="Manage scheduled income and expenses. Due items generate real transactions when processed from the dashboard."
+        description="Manage scheduled income and expenses that generate real transactions when due."
       />
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
@@ -173,6 +223,7 @@ function RecurringTransactions() {
             className="space-y-4"
           >
             <input
+              required
               placeholder="Title"
               value={formData.title}
               onChange={(e) =>
@@ -181,9 +232,12 @@ function RecurringTransactions() {
                   title: e.target.value,
                 })
               }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             />
             <input
+              required
+              min="0"
+              step="0.01"
               type="number"
               placeholder="Amount"
               value={formData.amount}
@@ -193,7 +247,7 @@ function RecurringTransactions() {
                   amount: e.target.value,
                 })
               }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             />
             <select
               value={formData.type}
@@ -205,12 +259,13 @@ function RecurringTransactions() {
                   customCategory: "",
                 })
               }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             >
               <option value="income">Income</option>
               <option value="expense">Expense</option>
             </select>
             <select
+              required
               value={formData.category}
               onChange={(e) =>
                 setFormData({
@@ -222,7 +277,7 @@ function RecurringTransactions() {
                       : "",
                 })
               }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             >
               <option value="">Category</option>
               {categories.map((category) => (
@@ -236,6 +291,7 @@ function RecurringTransactions() {
             </select>
             {formData.category === "Other" && (
               <input
+                required
                 placeholder="Custom category"
                 value={formData.customCategory}
                 onChange={(e) =>
@@ -244,7 +300,7 @@ function RecurringTransactions() {
                     customCategory: e.target.value,
                   })
                 }
-                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
+                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
               />
             )}
             <select
@@ -255,46 +311,67 @@ function RecurringTransactions() {
                   frequency: e.target.value,
                 })
               }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             >
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
-              <option value="Monthly">Monthly</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
             </select>
-            <input
-              type="date"
-              value={formData.next_due_date}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  next_due_date: e.target.value,
-                })
-              }
-              className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none"
-            />
-            <label className="flex items-center gap-2 text-sm font-bold text-[var(--text)]">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
               <input
-                type="checkbox"
-                checked={formData.is_active}
+                required
+                type="date"
+                value={formData.start_date}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    is_active: e.target.checked,
+                    start_date: e.target.value,
+                  })
+                }
+                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
+              />
+              <input
+                type="date"
+                value={formData.end_date}
+                min={formData.start_date}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    end_date: e.target.value,
+                  })
+                }
+                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm font-bold text-[var(--text)]">
+              <input
+                type="checkbox"
+                checked={formData.active}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    active: e.target.checked,
                   })
                 }
               />
               Active
             </label>
 
-            <div className="flex gap-3">
-              <button className="rounded-2xl bg-[#F97316] px-5 py-3 text-sm font-bold text-white">
+            <div className="flex flex-wrap gap-3">
+              <motion.button
+                whileTap={{
+                  scale: 0.98,
+                }}
+                className="rounded-2xl bg-[#F97316] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600"
+              >
                 {editingId ? "Update" : "Create"}
-              </button>
+              </motion.button>
               {editingId && (
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="rounded-2xl border border-[var(--card-border)] px-5 py-3 text-sm font-bold"
+                  className="rounded-2xl border border-[var(--card-border)] px-5 py-3 text-sm font-bold text-[var(--text)] transition hover:bg-[var(--muted-bg)]"
                 >
                   Cancel
                 </button>
@@ -303,76 +380,150 @@ function RecurringTransactions() {
           </form>
         </AnimatedCard>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          {items.length === 0 ? (
-            <EmptyState
-              icon={Repeat}
-              title="No recurring items"
-              description="Create rent, salary, bills, or other repeating activity."
-            />
-          ) : (
-            items.map((item) => (
-              <AnimatedCard
-                key={item.id}
-                className="p-5"
+        <div className="space-y-6">
+          <AnimatedCard className="p-5">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[var(--text)]">
+                  Upcoming Payments
+                </h2>
+                <p className="text-sm text-[var(--muted-text)]">
+                  Next scheduled active occurrences.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={processing}
+                onClick={handleProcess}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#14B8A6] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-lg font-bold text-[var(--text)]">
-                      {item.title}
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--muted-text)]">
-                      {item.frequency} / due {item.next_due_date}
-                    </p>
+                <RefreshCcw size={17} />
+                {processing ? "Processing" : "Process Due"}
+              </button>
+            </div>
+
+            {upcoming.length === 0 ? (
+              <EmptyState
+                icon={CalendarClock}
+                title="No upcoming payments"
+                description="Active recurring items will appear here."
+              />
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {upcoming.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-[var(--text)]">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-sm text-[var(--muted-text)]">
+                          Due {formatDate(item.next_due_date)}
+                        </p>
+                      </div>
+                      <span
+                        className={`text-sm font-bold ${
+                          item.type === "income"
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }`}
+                      >
+                        {formatCurrency(item.amount)}
+                      </span>
+                    </div>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      item.is_active
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-100 text-slate-600"
+                ))}
+              </div>
+            )}
+          </AnimatedCard>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            {items.length === 0 ? (
+              <EmptyState
+                icon={Repeat}
+                title="No recurring items"
+                description="Create rent, salary, bills, or other repeating activity."
+              />
+            ) : (
+              items.map((item) => (
+                <AnimatedCard
+                  key={item.id}
+                  className="p-5"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg font-bold text-[var(--text)]">
+                        {item.title}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--muted-text)]">
+                        {titleCase(item.frequency)} / starts{" "}
+                        {formatDate(item.start_date)}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        item.active
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {item.active ? "Active" : "Paused"}
+                    </span>
+                  </div>
+                  <p
+                    className={`mt-4 text-2xl font-bold ${
+                      item.type === "income"
+                        ? "text-emerald-600"
+                        : "text-rose-600"
                     }`}
                   >
-                    {item.is_active ? "Active" : "Paused"}
-                  </span>
-                </div>
-                <p
-                  className={`mt-4 text-2xl font-bold ${
-                    item.type === "income"
-                      ? "text-emerald-600"
-                      : "text-rose-600"
-                  }`}
-                >
-                  {formatCurrency(item.amount)}
-                </p>
-                <p className="mt-1 text-sm capitalize text-[var(--muted-text)]">
-                  {item.type} / {item.category}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(item.id)}
-                    className="rounded-xl bg-[var(--muted-bg)] px-3 py-2 text-xs font-bold text-[var(--text)]"
-                  >
-                    {item.is_active ? "Disable" : "Enable"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(item)}
-                    className="rounded-xl border border-[var(--card-border)] p-2 text-[var(--muted-text)]"
-                  >
-                    <Edit3 size={17} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPendingDeleteId(item.id)}
-                    className="rounded-xl border border-rose-200 p-2 text-rose-600"
-                  >
-                    <Trash2 size={17} />
-                  </button>
-                </div>
-              </AnimatedCard>
-            ))
-          )}
+                    {formatCurrency(item.amount)}
+                  </p>
+                  <p className="mt-1 text-sm capitalize text-[var(--muted-text)]">
+                    {item.type} / {item.category}
+                  </p>
+                  <p className="mt-3 text-xs text-[var(--muted-text)]">
+                    Last processed: {formatDate(item.last_processed_date)}{" "}
+                    &middot;{" "}
+                    Ends: {formatDate(item.end_date)}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggle(item.id)}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[var(--muted-bg)] px-3 py-2 text-xs font-bold text-[var(--text)] transition hover:bg-[var(--card-border)]"
+                    >
+                      {item.active ? (
+                        <Pause size={15} />
+                      ) : (
+                        <Play size={15} />
+                      )}
+                      {item.active ? "Pause" : "Resume"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(item)}
+                      className="rounded-xl border border-[var(--card-border)] p-2 text-[var(--muted-text)] transition hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
+                      aria-label="Edit recurring transaction"
+                    >
+                      <Edit3 size={17} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingDeleteId(item.id)}
+                      className="rounded-xl border border-rose-200 p-2 text-rose-600 transition hover:bg-rose-50"
+                      aria-label="Delete recurring transaction"
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                </AnimatedCard>
+              ))
+            )}
+          </div>
         </div>
       </div>
 

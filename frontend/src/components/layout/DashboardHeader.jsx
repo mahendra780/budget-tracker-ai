@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Menu,
   Moon,
+  Repeat,
   ReceiptText,
   Sun,
   Target,
@@ -14,7 +15,9 @@ const routeTitles = {
   "/": "Dashboard",
   "/transactions": "Transactions",
   "/budgets": "Budgets",
+  "/budgets/history": "Budget History",
   "/goals": "Goals",
+  "/recurring": "Recurring",
 };
 
 const mobileLinks = [
@@ -37,6 +40,11 @@ const mobileLinks = [
     to: "/goals",
     label: "Goals",
     icon: Target,
+  },
+  {
+    to: "/recurring",
+    label: "Recurring",
+    icon: Repeat,
   },
 ];
 

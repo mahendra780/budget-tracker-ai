@@ -1,9 +1,13 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models.budget import Budget
 from app.database.dependencies import get_db
 from app.models.goal_contribution import GoalContribution
 from app.models.transaction import Transaction
+from app.services.budget_service import ensure_current_month_budgets
 import pandas as pd
 from app.services.analytics_service import (
     transactions_to_dataframe
@@ -98,8 +102,18 @@ def recommendations(
 ):
 
     recommendations = []
+    current = date.today()
 
-    budgets = db.query(Budget).all()
+    ensure_current_month_budgets(db, current)
+
+    budgets = (
+        db.query(Budget)
+        .filter(
+            Budget.month == current.month,
+            Budget.year == current.year,
+        )
+        .all()
+    )
 
     for budget in budgets:
 
@@ -108,7 +122,13 @@ def recommendations(
             .filter(
                 Transaction.type == "expense",
                 Transaction.category == budget.category,
-                ~Transaction.id.in_(goal_transaction_ids(db))
+                func.extract("month", Transaction.date)
+                == current.month,
+                func.extract("year", Transaction.date)
+                == current.year,
+                ~Transaction.id.in_(
+                    goal_transaction_ids(db)
+                )
             )
             .all()
         )
@@ -117,6 +137,17 @@ def recommendations(
             expense.amount
             for expense in expenses
         )
+
+        # Prevent division by zero
+        if budget.monthly_limit <= 0:
+
+            recommendations.append({
+                "type": "warning",
+                "message":
+                f"{budget.category} has an invalid budget limit"
+            })
+
+            continue
 
         usage_percentage = (
             total_spent

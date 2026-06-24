@@ -6,6 +6,7 @@ import {
   ChevronRight,
   LayoutDashboard,
   PiggyBank,
+  Repeat,
   ReceiptText,
   Target,
   WalletCards,
@@ -31,6 +32,11 @@ const links = [
     to: "/goals",
     label: "Goals",
     icon: Target,
+  },
+  {
+    to: "/recurring",
+    label: "Recurring",
+    icon: Repeat,
   },
 ];
 

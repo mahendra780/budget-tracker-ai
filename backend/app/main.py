@@ -8,6 +8,7 @@ from app.routes.transaction import router as transaction_router
 from app.routes.budget import router as budget_router
 from app.routes.goal import router as goal_router
 from app.routes.ai import router as ai_router
+from app.routes.recurring_transaction import router as recurring_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -34,6 +35,7 @@ app.include_router(transaction_router)
 app.include_router(budget_router)
 app.include_router(goal_router)
 app.include_router(ai_router)
+app.include_router(recurring_router)
 
 @app.get("/")
 def root():

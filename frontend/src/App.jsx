@@ -12,7 +12,9 @@ import Sidebar from "./components/layout/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
+import BudgetHistory from "./pages/BudgetHistory";
 import Goals from "./pages/Goals";
+import RecurringTransactions from "./pages/RecurringTransactions";
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] =
@@ -77,8 +79,18 @@ function App() {
             />
 
             <Route
+              path="/budgets/history"
+              element={<BudgetHistory />}
+            />
+
+            <Route
               path="/goals"
               element={<Goals />}
+            />
+
+            <Route
+              path="/recurring"
+              element={<RecurringTransactions />}
             />
 
           </Routes>

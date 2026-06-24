@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Float, Integer, String
 
 from app.database.database import Base
 
@@ -11,3 +11,7 @@ class Budget(Base):
     category = Column(String, nullable=False)
 
     monthly_limit = Column(Float, nullable=False)
+
+    month = Column(Integer, nullable=False)
+
+    year = Column(Integer, nullable=False)

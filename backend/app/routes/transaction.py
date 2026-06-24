@@ -9,6 +9,7 @@ from app.schemas.transaction import (
     TransactionCreate,
     TransactionResponse
 )
+from app.services.budget_service import ensure_budget_month
 
 router = APIRouter(
     prefix="/transactions",
@@ -22,6 +23,13 @@ def create_transaction(
     transaction: TransactionCreate,
     db: Session = Depends(get_db)
 ):
+    if transaction.type == "expense":
+        ensure_budget_month(
+            db,
+            transaction.date.month,
+            transaction.date.year,
+        )
+
     new_transaction = Transaction(
         title=transaction.title,
         amount=transaction.amount,
@@ -157,6 +165,13 @@ def update_transaction(
     transaction.type = updated_data.type
     transaction.category = updated_data.category
     transaction.date = updated_data.date
+
+    if updated_data.type == "expense":
+        ensure_budget_month(
+            db,
+            updated_data.date.month,
+            updated_data.date.year,
+        )
 
     db.commit()
     db.refresh(transaction)

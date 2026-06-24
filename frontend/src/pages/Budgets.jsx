@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
   Edit3,
+  History,
   Plus,
   Trash2,
   WalletCards,
@@ -155,6 +157,15 @@ function Budgets() {
         eyebrow="Spending guardrails"
         title="Budgets"
         description="Set category limits, track utilization, and spot overspending before it grows."
+        action={
+          <Link
+            to="/budgets/history"
+            className="inline-flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-3 text-sm font-bold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <History size={18} />
+            History
+          </Link>
+        }
       />
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
