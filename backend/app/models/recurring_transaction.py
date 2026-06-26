@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, Float, Integer, String
+from sqlalchemy import Boolean, Column, Date, Float, ForeignKey, Integer, String
 
 from app.database.database import Base
 
@@ -7,6 +7,7 @@ class RecurringTransaction(Base):
     __tablename__ = "recurring_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     title = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
     type = Column(String, nullable=False)

@@ -13,8 +13,49 @@ def run_startup_migrations():
     with engine.begin() as connection:
         connection.execute(
             text(
+                "CREATE TABLE IF NOT EXISTS users ("
+                "id INTEGER NOT NULL PRIMARY KEY, "
+                "full_name VARCHAR NOT NULL, "
+                "email VARCHAR NOT NULL UNIQUE, "
+                "hashed_password VARCHAR NOT NULL, "
+                "is_verified BOOLEAN NOT NULL, "
+                "created_at DATETIME NOT NULL, "
+                "verification_token VARCHAR, "
+                "reset_token VARCHAR, "
+                "reset_token_expires_at DATETIME"
+                ")"
+            )
+        )
+        connection.execute(
+            text(
+                "INSERT INTO users "
+                "(full_name, email, hashed_password, is_verified, created_at) "
+                "SELECT :full_name, :email, :hashed_password, 1, datetime('now') "
+                "WHERE NOT EXISTS ("
+                "SELECT 1 FROM users WHERE email = :email"
+                ")"
+            ),
+            {
+                "full_name": "Default Local User",
+                "email": "default@local.app",
+                "hashed_password": (
+                    "$2b$12$pmoh2J8ULWrsuYvsf3DWIOfKOrBL8HO"
+                    "LUtrEmSBnXonYHzHPfgYGK"
+                ),
+            },
+        )
+        default_user_id = connection.execute(
+            text(
+                "SELECT id FROM users WHERE email = :email"
+            ),
+            {"email": "default@local.app"},
+        ).scalar()
+
+        connection.execute(
+            text(
                 "CREATE TABLE IF NOT EXISTS budget_templates ("
                 "id INTEGER NOT NULL PRIMARY KEY, "
+                "user_id INTEGER, "
                 "category VARCHAR NOT NULL, "
                 "monthly_limit FLOAT NOT NULL, "
                 "auto_renew BOOLEAN NOT NULL"
@@ -22,11 +63,114 @@ def run_startup_migrations():
             )
         )
 
+        budget_template_columns = {
+            column["name"]
+            for column in inspector.get_columns("budget_templates")
+        } if "budget_templates" in table_names else set()
+
+        if "budget_templates" in table_names and "user_id" not in budget_template_columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE budget_templates "
+                    "ADD COLUMN user_id INTEGER"
+                )
+            )
+            connection.execute(
+                text(
+                    "UPDATE budget_templates "
+                    "SET user_id = :user_id "
+                    "WHERE user_id IS NULL"
+                ),
+                {"user_id": default_user_id},
+            )
+
+        if "transactions" in table_names:
+            transaction_columns = {
+                column["name"]
+                for column in inspector.get_columns("transactions")
+            }
+            if "user_id" not in transaction_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE transactions "
+                        "ADD COLUMN user_id INTEGER"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "UPDATE transactions "
+                        "SET user_id = :user_id "
+                        "WHERE user_id IS NULL"
+                    ),
+                    {"user_id": default_user_id},
+                )
+
+        if "goals" in table_names:
+            goal_columns = {
+                column["name"]
+                for column in inspector.get_columns("goals")
+            }
+            if "user_id" not in goal_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE goals "
+                        "ADD COLUMN user_id INTEGER"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "UPDATE goals "
+                        "SET user_id = :user_id "
+                        "WHERE user_id IS NULL"
+                    ),
+                    {"user_id": default_user_id},
+                )
+
+        if "goal_contributions" in table_names:
+            contribution_columns = {
+                column["name"]
+                for column in inspector.get_columns("goal_contributions")
+            }
+            if "user_id" not in contribution_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE goal_contributions "
+                        "ADD COLUMN user_id INTEGER"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "UPDATE goal_contributions "
+                        "SET user_id = COALESCE(("
+                        "SELECT goals.user_id FROM goals "
+                        "WHERE goals.id = goal_contributions.goal_id"
+                        "), :user_id) "
+                        "WHERE user_id IS NULL"
+                    ),
+                    {"user_id": default_user_id},
+                )
+
         if "budgets" in table_names:
             budget_columns = {
                 column["name"]
                 for column in inspector.get_columns("budgets")
             }
+
+            if "user_id" not in budget_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE budgets "
+                        "ADD COLUMN user_id INTEGER"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "UPDATE budgets "
+                        "SET user_id = :user_id "
+                        "WHERE user_id IS NULL"
+                    ),
+                    {"user_id": default_user_id},
+                )
 
             if "month" not in budget_columns:
                 connection.execute(
@@ -63,16 +207,18 @@ def run_startup_migrations():
             connection.execute(
                 text(
                     "INSERT INTO budget_templates "
-                    "(category, monthly_limit, auto_renew) "
-                    "SELECT b.category, b.monthly_limit, 1 "
+                    "(user_id, category, monthly_limit, auto_renew) "
+                    "SELECT b.user_id, b.category, b.monthly_limit, 1 "
                     "FROM budgets b "
                     "WHERE NOT EXISTS ("
                     "SELECT 1 FROM budget_templates bt "
-                    "WHERE lower(bt.category) = lower(b.category)"
+                    "WHERE lower(bt.category) = lower(b.category) "
+                    "AND bt.user_id = b.user_id"
                     ") "
                     "AND NOT EXISTS ("
                     "SELECT 1 FROM budgets newer "
                     "WHERE lower(newer.category) = lower(b.category) "
+                    "AND newer.user_id = b.user_id "
                     "AND ("
                     "newer.year > b.year "
                     "OR (newer.year = b.year AND newer.month > b.month) "
@@ -88,8 +234,8 @@ def run_startup_migrations():
                 connection.execute(
                     text(
                         "INSERT INTO budgets "
-                        "(category, monthly_limit, month, year) "
-                        "SELECT bt.category, bt.monthly_limit, "
+                        "(user_id, category, monthly_limit, month, year) "
+                        "SELECT bt.user_id, bt.category, bt.monthly_limit, "
                         "CAST(strftime('%m', t.date) AS INTEGER), "
                         "CAST(strftime('%Y', t.date) AS INTEGER) "
                         "FROM budget_templates bt "
@@ -101,6 +247,7 @@ def run_startup_migrations():
                         "AND NOT EXISTS ("
                         "SELECT 1 FROM budgets b "
                         "WHERE lower(b.category) = lower(bt.category) "
+                        "AND b.user_id = bt.user_id "
                         "AND b.month = CAST(strftime('%m', t.date) AS INTEGER) "
                         "AND b.year = CAST(strftime('%Y', t.date) AS INTEGER)"
                         ")"
@@ -112,6 +259,22 @@ def run_startup_migrations():
                 column["name"]
                 for column in inspector.get_columns("recurring_transactions")
             }
+
+            if "user_id" not in recurring_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE recurring_transactions "
+                        "ADD COLUMN user_id INTEGER"
+                    )
+                )
+                connection.execute(
+                    text(
+                        "UPDATE recurring_transactions "
+                        "SET user_id = :user_id "
+                        "WHERE user_id IS NULL"
+                    ),
+                    {"user_id": default_user_id},
+                )
 
             if "start_date" not in recurring_columns:
                 connection.execute(
@@ -187,6 +350,7 @@ def run_startup_migrations():
                     text(
                         "CREATE TABLE recurring_transactions_new ("
                         "id INTEGER NOT NULL PRIMARY KEY, "
+                        "user_id INTEGER, "
                         "title VARCHAR NOT NULL, "
                         "amount FLOAT NOT NULL, "
                         "type VARCHAR NOT NULL, "
@@ -202,9 +366,9 @@ def run_startup_migrations():
                 connection.execute(
                     text(
                         "INSERT INTO recurring_transactions_new "
-                        "(id, title, amount, type, category, frequency, "
+                        "(id, user_id, title, amount, type, category, frequency, "
                         "start_date, end_date, last_processed_date, active) "
-                        "SELECT id, title, amount, type, category, "
+                        "SELECT id, user_id, title, amount, type, category, "
                         "lower(frequency), start_date, end_date, "
                         "last_processed_date, active "
                         "FROM recurring_transactions"

@@ -10,6 +10,7 @@ class GoalContribution(Base):
     __tablename__ = "goal_contributions"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
     amount = Column(Float, nullable=False)
     action = Column(String, nullable=False)

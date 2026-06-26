@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database.dependencies import get_db
+from app.database.auth_dependencies import get_current_user
 from app.models.budget import Budget
+from app.models.user import User
 from app.schemas.budget import (
     BudgetCreate,
     BudgetResponse
@@ -30,10 +32,11 @@ router = APIRouter(
 @router.post("/", response_model=BudgetResponse)
 def create_budget(
     budget: BudgetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     current = date.today()
-    ensure_current_month_budgets(db, current)
+    ensure_current_month_budgets(db, current, current_user.id)
     category = normalize_category(budget.category)
 
     existing_budget = (
@@ -43,6 +46,7 @@ def create_budget(
             == category.lower(),
             Budget.month == current.month,
             Budget.year == current.year,
+            Budget.user_id == current_user.id,
         )
         .first()
     )
@@ -54,6 +58,7 @@ def create_budget(
         )
 
     new_budget = Budget(
+        user_id=current_user.id,
         category=category,
         monthly_limit=budget.monthly_limit,
         month=current.month,
@@ -65,6 +70,7 @@ def create_budget(
         category,
         budget.monthly_limit,
         auto_renew=True,
+        user_id=current_user.id,
     )
     db.add(new_budget)
     db.commit()
@@ -76,13 +82,18 @@ def create_budget(
 # Get All Budgets
 @router.get("/", response_model=list[BudgetResponse])
 def get_budgets(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     current = date.today()
-    ensure_current_month_budgets(db, current)
-    ensure_transaction_month_budgets(db)
+    ensure_current_month_budgets(db, current, current_user.id)
+    ensure_transaction_month_budgets(db, current_user.id)
 
-    return db.query(Budget).all()
+    return (
+        db.query(Budget)
+        .filter(Budget.user_id == current_user.id)
+        .all()
+    )
 
 
 # Budget Status Analytics
@@ -90,11 +101,12 @@ def get_budgets(
 def budget_status(
     month: int | None = None,
     year: int | None = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     current = date.today()
-    ensure_current_month_budgets(db, current)
-    ensure_transaction_month_budgets(db)
+    ensure_current_month_budgets(db, current, current_user.id)
+    ensure_transaction_month_budgets(db, current_user.id)
     selected_month = month or current.month
     selected_year = year or current.year
 
@@ -102,18 +114,20 @@ def budget_status(
         db,
         selected_month,
         selected_year,
+        current_user.id,
     )
 
 
 @router.get("/history")
 def budget_history(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     current = date.today()
-    ensure_current_month_budgets(db, current)
-    ensure_transaction_month_budgets(db)
+    ensure_current_month_budgets(db, current, current_user.id)
+    ensure_transaction_month_budgets(db, current_user.id)
 
-    return build_budget_history(db)
+    return build_budget_history(db, current_user.id)
 
 
 # Get Single Budget
@@ -121,11 +135,15 @@ def budget_history(
             response_model=BudgetResponse)
 def get_budget(
     budget_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     budget = (
         db.query(Budget)
-        .filter(Budget.id == budget_id)
+        .filter(
+            Budget.id == budget_id,
+            Budget.user_id == current_user.id,
+        )
         .first()
     )
 
@@ -144,11 +162,15 @@ def get_budget(
 def update_budget(
     budget_id: int,
     updated_budget: BudgetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     budget = (
         db.query(Budget)
-        .filter(Budget.id == budget_id)
+        .filter(
+            Budget.id == budget_id,
+            Budget.user_id == current_user.id,
+        )
         .first()
     )
 
@@ -166,6 +188,7 @@ def update_budget(
             Budget.id != budget_id,
             Budget.month == budget.month,
             Budget.year == budget.year,
+            Budget.user_id == current_user.id,
         )
         .first()
     )
@@ -183,13 +206,14 @@ def update_budget(
     budget.monthly_limit = updated_budget.monthly_limit
 
     if old_category.lower() != new_category.lower():
-        disable_budget_template(db, old_category)
+        disable_budget_template(db, old_category, current_user.id)
 
     upsert_budget_template(
         db,
         new_category,
         updated_budget.monthly_limit,
         auto_renew=True,
+        user_id=current_user.id,
     )
     db.commit()
     db.refresh(budget)
@@ -201,11 +225,15 @@ def update_budget(
 @router.delete("/{budget_id}")
 def delete_budget(
     budget_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     budget = (
         db.query(Budget)
-        .filter(Budget.id == budget_id)
+        .filter(
+            Budget.id == budget_id,
+            Budget.user_id == current_user.id,
+        )
         .first()
     )
 
@@ -215,7 +243,7 @@ def delete_budget(
             detail="Budget not found"
         )
 
-    disable_budget_template(db, budget.category)
+    disable_budget_template(db, budget.category, current_user.id)
     db.delete(budget)
     db.commit()
 

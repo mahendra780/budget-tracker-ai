@@ -65,6 +65,7 @@ def transaction_exists_for_occurrence(
             Transaction.type == item.type,
             Transaction.category == item.category,
             Transaction.date == occurrence_date,
+            Transaction.user_id == item.user_id,
         )
         .first()
     )
@@ -80,9 +81,11 @@ def create_transaction_for_occurrence(
             db,
             occurrence_date.month,
             occurrence_date.year,
+            item.user_id,
         )
 
     transaction = Transaction(
+        user_id=item.user_id,
         title=f"Recurring - {item.title}",
         amount=item.amount,
         type=item.type,
@@ -97,15 +100,22 @@ def create_transaction_for_occurrence(
 def process_due_recurring_transactions(
     db: Session,
     current_date: date | None = None,
+    user_id: int | None = None,
 ):
     today = current_date or date.today()
     generated = []
 
-    recurring_items = (
+    recurring_query = (
         db.query(RecurringTransaction)
         .filter(RecurringTransaction.active == True)  # noqa: E712
-        .all()
     )
+
+    if user_id is not None:
+        recurring_query = recurring_query.filter(
+            RecurringTransaction.user_id == user_id
+        )
+
+    recurring_items = recurring_query.all()
 
     for item in recurring_items:
         occurrence_date = get_next_due_date(item)
@@ -137,12 +147,17 @@ def process_due_recurring_transactions(
 def build_upcoming_recurring_transactions(
     db: Session,
     limit: int = 5,
+    user_id: int | None = None,
 ):
-    items = (
+    item_query = (
         db.query(RecurringTransaction)
         .filter(RecurringTransaction.active == True)  # noqa: E712
-        .all()
     )
+
+    if user_id is not None:
+        item_query = item_query.filter(RecurringTransaction.user_id == user_id)
+
+    items = item_query.all()
 
     upcoming = []
 
@@ -154,6 +169,7 @@ def build_upcoming_recurring_transactions(
         upcoming.append(
             {
                 "id": item.id,
+                "user_id": item.user_id,
                 "title": item.title,
                 "amount": item.amount,
                 "type": item.type,

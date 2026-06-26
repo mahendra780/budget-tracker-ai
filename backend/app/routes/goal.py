@@ -1,41 +1,76 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from datetime import date
 
+from app.database.auth_dependencies import get_current_user
 from app.database.dependencies import get_db
-
 from app.models.goal import Goal
 from app.models.goal_contribution import GoalContribution
 from app.models.transaction import Transaction
-
+from app.models.user import User
 from app.schemas.goal import (
     GoalCreate,
     GoalResponse,
-    GoalUpdate
+    GoalUpdate,
 )
 from app.schemas.goal_contribution import (
     GoalContributionCreate,
-    GoalContributionResponse
+    GoalContributionResponse,
 )
 
 router = APIRouter(
     prefix="/goals",
-    tags=["Goals"]
+    tags=["Goals"],
 )
 
 
-# Create Goal
+def get_goal_or_404(
+    db: Session,
+    goal_id: int,
+    user_id: int,
+):
+    goal = (
+        db.query(Goal)
+        .filter(
+            Goal.id == goal_id,
+            Goal.user_id == user_id,
+        )
+        .first()
+    )
+
+    if not goal:
+        raise HTTPException(
+            status_code=404,
+            detail="Goal not found",
+        )
+
+    return goal
+
+
+def goal_transaction_ids(db: Session, user_id: int):
+    return (
+        db.query(GoalContribution.transaction_id)
+        .filter(
+            GoalContribution.transaction_id.isnot(None),
+            GoalContribution.user_id == user_id,
+        )
+    )
+
+
 @router.post("/", response_model=GoalResponse)
 def create_goal(
     goal: GoalCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     new_goal = Goal(
+        user_id=current_user.id,
         goal_name=goal.goal_name,
         target_amount=goal.target_amount,
         current_amount=goal.current_amount,
-        target_date=goal.target_date
+        target_date=goal.target_date,
     )
 
     db.add(new_goal)
@@ -45,32 +80,36 @@ def create_goal(
     return new_goal
 
 
-# Get All Goals
-@router.get("/",
-            response_model=list[GoalResponse])
+@router.get("/", response_model=list[GoalResponse])
 def get_goals(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return db.query(Goal).all()
+    return (
+        db.query(Goal)
+        .filter(Goal.user_id == current_user.id)
+        .all()
+    )
+
 
 @router.get("/progress")
 def goal_progress(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    goals = db.query(Goal).all()
+    goals = (
+        db.query(Goal)
+        .filter(Goal.user_id == current_user.id)
+        .all()
+    )
 
     result = []
 
     for goal in goals:
-
-        remaining_amount = (
-            goal.target_amount
-            - goal.current_amount
-        )
+        remaining_amount = goal.target_amount - goal.current_amount
 
         progress_percentage = (
-            (goal.current_amount / goal.target_amount)
-            * 100
+            (goal.current_amount / goal.target_amount) * 100
             if goal.target_amount > 0
             else 0
         )
@@ -81,55 +120,30 @@ def goal_progress(
             "target_amount": goal.target_amount,
             "current_amount": goal.current_amount,
             "remaining_amount": remaining_amount,
-            "progress_percentage": round(
-                progress_percentage,
-                2
-            ),
-            "target_date":goal.target_date
+            "progress_percentage": round(progress_percentage, 2),
+            "target_date": goal.target_date,
         })
 
     return result
-# Get Single Goal
-@router.get("/{goal_id}",
-            response_model=GoalResponse)
+
+
+@router.get("/{goal_id}", response_model=GoalResponse)
 def get_goal(
     goal_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    goal = (
-        db.query(Goal)
-        .filter(Goal.id == goal_id)
-        .first()
-    )
-
-    if not goal:
-        raise HTTPException(
-            status_code=404,
-            detail="Goal not found"
-        )
-
-    return goal
+    return get_goal_or_404(db, goal_id, current_user.id)
 
 
-# Update Goal
-@router.put("/{goal_id}",
-            response_model=GoalResponse)
+@router.put("/{goal_id}", response_model=GoalResponse)
 def update_goal(
     goal_id: int,
     updated_goal: GoalUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    goal = (
-        db.query(Goal)
-        .filter(Goal.id == goal_id)
-        .first()
-    )
-
-    if not goal:
-        raise HTTPException(
-            status_code=404,
-            detail="Goal not found"
-        )
+    goal = get_goal_or_404(db, goal_id, current_user.id)
 
     goal.goal_name = updated_goal.goal_name
     goal.target_amount = updated_goal.target_amount
@@ -143,50 +157,42 @@ def update_goal(
 
 @router.post(
     "/{goal_id}/contributions",
-    response_model=GoalContributionResponse
+    response_model=GoalContributionResponse,
 )
 def create_goal_contribution(
     goal_id: int,
     contribution: GoalContributionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    goal = (
-        db.query(Goal)
-        .filter(Goal.id == goal_id)
-        .first()
-    )
-
-    if not goal:
-        raise HTTPException(
-            status_code=404,
-            detail="Goal not found"
-        )
+    goal = get_goal_or_404(db, goal_id, current_user.id)
 
     action = contribution.action.lower()
 
     if action not in ["add", "withdraw"]:
         raise HTTPException(
             status_code=400,
-            detail="Contribution action must be add or withdraw"
+            detail="Contribution action must be add or withdraw",
         )
 
     if contribution.amount <= 0:
         raise HTTPException(
             status_code=400,
-            detail="Invalid contribution amount"
+            detail="Invalid contribution amount",
         )
 
     if action == "add":
-        goal_transaction_ids = (
-            db.query(GoalContribution.transaction_id)
-            .filter(GoalContribution.transaction_id.isnot(None))
+        linked_goal_transaction_ids = goal_transaction_ids(
+            db,
+            current_user.id,
         )
 
         total_income = (
             db.query(func.sum(Transaction.amount))
             .filter(
                 Transaction.type == "income",
-                ~Transaction.id.in_(goal_transaction_ids)
+                Transaction.user_id == current_user.id,
+                ~Transaction.id.in_(linked_goal_transaction_ids),
             )
             .scalar()
         ) or 0
@@ -195,34 +201,31 @@ def create_goal_contribution(
             db.query(func.sum(Transaction.amount))
             .filter(
                 Transaction.type == "expense",
-                ~Transaction.id.in_(goal_transaction_ids)
+                Transaction.user_id == current_user.id,
+                ~Transaction.id.in_(linked_goal_transaction_ids),
             )
             .scalar()
         ) or 0
 
         goal_savings = (
             db.query(func.sum(Goal.current_amount))
+            .filter(Goal.user_id == current_user.id)
             .scalar()
         ) or 0
 
-        available_balance = (
-            total_income
-            - total_expense
-            - goal_savings
-        )
+        available_balance = total_income - total_expense - goal_savings
 
         if contribution.amount > available_balance:
             raise HTTPException(
                 status_code=400,
-                detail="Insufficient Balance"
+                detail="Insufficient Balance",
             )
 
-    if action == "withdraw":
-        if contribution.amount > goal.current_amount:
-            raise HTTPException(
-                status_code=400,
-                detail="Insufficient Goal Savings"
-            )
+    if action == "withdraw" and contribution.amount > goal.current_amount:
+        raise HTTPException(
+            status_code=400,
+            detail="Insufficient Goal Savings",
+        )
 
     today = date.today()
 
@@ -232,12 +235,13 @@ def create_goal_contribution(
         goal.current_amount -= contribution.amount
 
     new_contribution = GoalContribution(
+        user_id=current_user.id,
         goal_id=goal.id,
         amount=contribution.amount,
         action=action,
         date=today,
         created_at=today,
-        transaction_id=None
+        transaction_id=None,
     )
 
     db.add(new_contribution)
@@ -249,30 +253,24 @@ def create_goal_contribution(
 
 @router.get(
     "/{goal_id}/contributions",
-    response_model=list[GoalContributionResponse]
+    response_model=list[GoalContributionResponse],
 )
 def get_goal_contributions(
     goal_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    goal = (
-        db.query(Goal)
-        .filter(Goal.id == goal_id)
-        .first()
-    )
-
-    if not goal:
-        raise HTTPException(
-            status_code=404,
-            detail="Goal not found"
-        )
+    get_goal_or_404(db, goal_id, current_user.id)
 
     return (
         db.query(GoalContribution)
-        .filter(GoalContribution.goal_id == goal_id)
+        .filter(
+            GoalContribution.goal_id == goal_id,
+            GoalContribution.user_id == current_user.id,
+        )
         .order_by(
             GoalContribution.created_at.desc(),
-            GoalContribution.id.desc()
+            GoalContribution.id.desc(),
         )
         .all()
     )
@@ -280,14 +278,16 @@ def get_goal_contributions(
 
 @router.get("/contributions/history/all")
 def get_all_goal_contributions(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     contributions = (
         db.query(GoalContribution, Goal.goal_name)
         .join(Goal, Goal.id == GoalContribution.goal_id)
+        .filter(GoalContribution.user_id == current_user.id)
         .order_by(
             GoalContribution.created_at.desc(),
-            GoalContribution.id.desc()
+            GoalContribution.id.desc(),
         )
         .all()
     )
@@ -299,33 +299,26 @@ def get_all_goal_contributions(
             "goal_name": goal_name,
             "amount": contribution.amount,
             "action": contribution.action,
-            "created_at": contribution.created_at
+            "created_at": contribution.created_at,
         }
         for contribution, goal_name in contributions
     ]
 
 
-# Delete Goal
 @router.delete("/{goal_id}")
 def delete_goal(
     goal_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    goal = (
-        db.query(Goal)
-        .filter(Goal.id == goal_id)
-        .first()
-    )
-
-    if not goal:
-        raise HTTPException(
-            status_code=404,
-            detail="Goal not found"
-        )
+    goal = get_goal_or_404(db, goal_id, current_user.id)
 
     (
         db.query(GoalContribution)
-        .filter(GoalContribution.goal_id == goal_id)
+        .filter(
+            GoalContribution.goal_id == goal_id,
+            GoalContribution.user_id == current_user.id,
+        )
         .delete()
     )
 
@@ -333,5 +326,5 @@ def delete_goal(
     db.commit()
 
     return {
-        "message": "Goal deleted successfully"
+        "message": "Goal deleted successfully",
     }
