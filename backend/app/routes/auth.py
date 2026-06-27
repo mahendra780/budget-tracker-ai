@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -19,16 +20,23 @@ from app.schemas.auth import (
     VerifyEmailResponse,
 )
 from app.services.auth_service import (
+    RESET_TOKEN_EXPIRE_MINUTES,
     create_access_token,
     generate_secure_token,
     hash_password,
     reset_token_expiry,
     verify_password,
 )
+from app.services.email_service import EmailService
 
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
+)
+
+logger = logging.getLogger(__name__)
+PASSWORD_RESET_REQUEST_MESSAGE = (
+    "If an account with this email exists, a password reset link has been sent."
 )
 
 
@@ -119,8 +127,7 @@ def forgot_password(
 
     if not user:
         return {
-            "message": "If that email exists, a reset token has been generated.",
-            "reset_token": None,
+            "message": PASSWORD_RESET_REQUEST_MESSAGE,
         }
 
     reset_token = generate_secure_token()
@@ -128,11 +135,20 @@ def forgot_password(
     user.reset_token_expires_at = reset_token_expiry()
     db.commit()
 
-    print(f"Password reset token for {user.email}: {reset_token}")
+    try:
+        EmailService().send_password_reset_email(
+            to_email=user.email,
+            token=reset_token,
+            expires_minutes=RESET_TOKEN_EXPIRE_MINUTES,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to send password reset email for user_id=%s",
+            user.id,
+        )
 
     return {
-        "message": "Password reset token generated.",
-        "reset_token": reset_token,
+        "message": PASSWORD_RESET_REQUEST_MESSAGE,
     }
 
 
