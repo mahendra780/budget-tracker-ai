@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import AnimatedCard from "../components/ui/AnimatedCard";
@@ -10,9 +10,8 @@ import {
 } from "../utils/notifications";
 
 function ForgotPassword() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [resetToken, setResetToken] = useState("");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -21,7 +20,10 @@ function ForgotPassword() {
     try {
       setSubmitting(true);
       const response = await forgotPassword({ email });
-      setResetToken(response.reset_token || "");
+      setMessage(
+        response.message
+          || "If an account with this email exists, a password reset link has been sent."
+      );
       notifySuccess("Password reset request processed.");
     } catch (error) {
       notifyError(error, "Failed to request password reset.");
@@ -68,18 +70,9 @@ function ForgotPassword() {
           </button>
         </form>
 
-        {resetToken && (
+        {message && (
           <div className="mt-5 rounded-2xl bg-[var(--muted-bg)] p-4 text-sm text-[var(--muted-text)]">
-            <p className="font-bold text-[var(--text)]">
-              Local reset link
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate(`/reset-password/${resetToken}`)}
-              className="mt-3 rounded-xl bg-[#14B8A6] px-4 py-2 text-xs font-bold text-white"
-            >
-              Reset Password
-            </button>
+            {message}
           </div>
         )}
 

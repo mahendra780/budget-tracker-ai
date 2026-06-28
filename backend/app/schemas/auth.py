@@ -53,7 +53,6 @@ class TokenResponse(BaseModel):
 class RegisterResponse(BaseModel):
     message: str
     user: UserResponse
-    verification_token: str
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -73,6 +72,3 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(min_length=8)
 
-
-class VerifyEmailResponse(BaseModel):
-    message: str

@@ -17,7 +17,6 @@ from app.schemas.auth import (
     UserLogin,
     UserRegister,
     UserResponse,
-    VerifyEmailResponse,
 )
 from app.services.auth_service import (
     RESET_TOKEN_EXPIRE_MINUTES,
@@ -57,25 +56,20 @@ def register(
             detail="Email already registered",
         )
 
-    verification_token = generate_secure_token()
     user = User(
         full_name=payload.full_name.strip(),
         email=payload.email.lower(),
         hashed_password=hash_password(payload.password),
-        is_verified=False,
-        verification_token=verification_token,
+        is_verified=True,
     )
 
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    print(f"Email verification token for {user.email}: {verification_token}")
-
     return {
-        "message": "Registration successful. Please verify your email.",
+        "message": "Account created successfully. You can now log in.",
         "user": user,
-        "verification_token": verification_token,
     }
 
 
@@ -180,30 +174,4 @@ def reset_password(
 
     return {
         "message": "Password reset successful.",
-    }
-
-
-@router.get("/verify-email/{token}", response_model=VerifyEmailResponse)
-def verify_email(
-    token: str,
-    db: Session = Depends(get_db),
-):
-    user = (
-        db.query(User)
-        .filter(User.verification_token == token)
-        .first()
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid verification token",
-        )
-
-    user.is_verified = True
-    user.verification_token = None
-    db.commit()
-
-    return {
-        "message": "Email verified successfully.",
     }

@@ -23,7 +23,6 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
-import VerifyEmail from "./pages/VerifyEmail";
 
 function AppShell({
   mobileOpen,
@@ -83,7 +82,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

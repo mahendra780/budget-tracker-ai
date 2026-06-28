@@ -49,7 +49,7 @@ function Profile() {
               {user?.full_name}
             </h2>
             <p className="text-sm text-[var(--muted-text)]">
-              {user?.is_verified ? "Verified account" : "Email not verified"}
+              {user?.email}
             </p>
           </div>
         </div>

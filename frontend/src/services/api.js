@@ -1,12 +1,12 @@
 import axios from "axios";
 
-import {
-  clearAuthToken,
-  getAuthToken,
-} from "./authStorage";
+import { clearAuthToken, getAuthToken } from "./authStorage";
 
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: import.meta.env.VITE_API_URL || "http://127.0.0.1:8000",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 api.interceptors.request.use((config) => {
@@ -23,14 +23,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (
-      error.response?.status === 401
-      && !window.location.pathname.startsWith("/login")
+      error.response?.status === 401 &&
+      !window.location.pathname.startsWith("/login")
     ) {
       clearAuthToken();
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

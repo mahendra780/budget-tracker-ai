@@ -20,7 +20,6 @@ def run_startup_migrations():
                 "hashed_password VARCHAR NOT NULL, "
                 "is_verified BOOLEAN NOT NULL, "
                 "created_at DATETIME NOT NULL, "
-                "verification_token VARCHAR, "
                 "reset_token VARCHAR, "
                 "reset_token_expires_at DATETIME"
                 ")"

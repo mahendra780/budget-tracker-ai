@@ -17,7 +17,7 @@ function Register() {
     email: "",
     password: "",
   });
-  const [verificationToken, setVerificationToken] = useState("");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (event) => {
@@ -26,8 +26,14 @@ function Register() {
     try {
       setSubmitting(true);
       const response = await registerUser(formData);
-      setVerificationToken(response.verification_token);
-      notifySuccess("Account created. Please verify your email.");
+      setMessage(
+        response.message
+          || "Account created successfully. You can now log in."
+      );
+      notifySuccess("Account created successfully. Please log in.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (error) {
       notifyError(error, "Failed to create account.");
     } finally {
@@ -112,20 +118,9 @@ function Register() {
           </button>
         </form>
 
-        {verificationToken && (
+        {message && (
           <div className="mt-5 rounded-2xl bg-[var(--muted-bg)] p-4 text-sm text-[var(--muted-text)]">
-            <p className="font-bold text-[var(--text)]">
-              Local verification link
-            </p>
-            <button
-              type="button"
-              onClick={() =>
-                navigate(`/verify-email/${verificationToken}`)
-              }
-              className="mt-3 rounded-xl bg-[#14B8A6] px-4 py-2 text-xs font-bold text-white"
-            >
-              Verify Email
-            </button>
+            {message}
           </div>
         )}
 
