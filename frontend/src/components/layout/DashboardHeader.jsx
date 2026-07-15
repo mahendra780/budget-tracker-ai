@@ -1,52 +1,12 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   Menu,
   Moon,
-  Repeat,
-  ReceiptText,
   Sun,
-  Target,
-  WalletCards,
   X,
 } from "lucide-react";
 
-const routeTitles = {
-  "/": "Dashboard",
-  "/transactions": "Transactions",
-  "/budgets": "Budgets",
-  "/budgets/history": "Budget History",
-  "/goals": "Goals",
-  "/recurring": "Recurring",
-};
-
-const mobileLinks = [
-  {
-    to: "/",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    to: "/transactions",
-    label: "Transactions",
-    icon: ReceiptText,
-  },
-  {
-    to: "/budgets",
-    label: "Budgets",
-    icon: WalletCards,
-  },
-  {
-    to: "/goals",
-    label: "Goals",
-    icon: Target,
-  },
-  {
-    to: "/recurring",
-    label: "Recurring",
-    icon: Repeat,
-  },
-];
+import { navigationLinks, routeTitles } from "./navigation";
 
 function DashboardHeader({
   theme,
@@ -98,7 +58,7 @@ function DashboardHeader({
 
       {mobileOpen && (
         <nav className="mt-4 grid gap-2 rounded-3xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 shadow-xl lg:hidden">
-          {mobileLinks.map((link) => {
+          {navigationLinks.map((link) => {
             const Icon = link.icon;
 
             return (
