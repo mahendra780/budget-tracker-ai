@@ -17,7 +17,7 @@ from app.routes.auth import router as auth_router
 
 
 Base.metadata.create_all(bind=engine)
-run_startup_migrations()
+# run_startup_migrations()
 
 
 app = FastAPI(
