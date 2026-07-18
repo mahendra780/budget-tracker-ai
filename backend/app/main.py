@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database.database import Base, engine
-from app.database.migrations import run_startup_migrations
 from app.routes.transaction import router as transaction_router
 from app.routes.budget import router as budget_router
 from app.routes.goal import router as goal_router
@@ -17,7 +16,7 @@ from app.routes.auth import router as auth_router
 
 
 Base.metadata.create_all(bind=engine)
-# run_startup_migrations()
+
 
 
 app = FastAPI(

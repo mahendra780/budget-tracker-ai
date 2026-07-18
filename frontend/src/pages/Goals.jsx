@@ -13,7 +13,6 @@ import {
 import AnimatedCard from "../components/ui/AnimatedCard";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import EmptyState from "../components/ui/EmptyState";
-import PageHeader from "../components/ui/PageHeader";
 import ProgressBar from "../components/ui/ProgressBar";
 import {
   createGoal,
@@ -238,12 +237,6 @@ function Goals() {
       }}
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <PageHeader
-        eyebrow="Savings momentum"
-        title="Goals"
-        description="Plan financial targets, track saved amounts, and celebrate milestones as you complete them."
-      />
-
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <AnimatedCard className="p-5">
           <div className="mb-5 flex items-center gap-3">

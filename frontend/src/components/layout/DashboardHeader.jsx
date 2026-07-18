@@ -1,5 +1,6 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import {
+  History,
   Menu,
   Moon,
   Sun,
@@ -16,6 +17,7 @@ function DashboardHeader({
 }) {
   const location = useLocation();
   const title = routeTitles[location.pathname] || "Dashboard";
+  const showBudgetHistory = location.pathname === "/budgets";
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--card-border)] bg-[var(--app-bg)]/85 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
@@ -40,20 +42,33 @@ function DashboardHeader({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onThemeToggle}
-          className="flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          {theme === "dark" ? (
-            <Sun size={18} />
-          ) : (
-            <Moon size={18} />
+        <div className="flex items-center gap-2">
+          {showBudgetHistory && (
+            <Link
+              to="/budgets/history"
+              aria-label="Budget history"
+              className="flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <History size={18} />
+              <span className="hidden sm:inline">History</span>
+            </Link>
           )}
-          <span className="hidden sm:inline">
-            {theme === "dark" ? "Light" : "Dark"}
-          </span>
-        </button>
+
+          <button
+            type="button"
+            onClick={onThemeToggle}
+            className="flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            {theme === "dark" ? (
+              <Sun size={18} />
+            ) : (
+              <Moon size={18} />
+            )}
+            <span className="hidden sm:inline">
+              {theme === "dark" ? "Light" : "Dark"}
+            </span>
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (

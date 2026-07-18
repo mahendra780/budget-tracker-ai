@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { LogOut, User } from "lucide-react";
 
 import AnimatedCard from "../components/ui/AnimatedCard";
-import PageHeader from "../components/ui/PageHeader";
 import { useAuth } from "../context/AuthContext";
 
 const formatDate = (value) => {
@@ -33,12 +32,6 @@ function Profile() {
       }}
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <PageHeader
-        eyebrow="Account"
-        title="Profile"
-        description="View your account details and sign out."
-      />
-
       <AnimatedCard className="max-w-2xl p-5">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-2xl bg-[#FFF4EC] p-3 text-[#F97316]">

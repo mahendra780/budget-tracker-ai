@@ -14,7 +14,6 @@ import {
 import AnimatedCard from "../components/ui/AnimatedCard";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import EmptyState from "../components/ui/EmptyState";
-import PageHeader from "../components/ui/PageHeader";
 import {
   createRecurringTransaction,
   deleteRecurringTransaction,
@@ -201,12 +200,6 @@ function RecurringTransactions() {
       }}
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <PageHeader
-        eyebrow="Autopay system"
-        title="Recurring Transactions"
-        description="Manage scheduled income and expenses that generate real transactions when due."
-      />
-
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <AnimatedCard className="p-5">
           <div className="mb-5 flex items-center gap-3">

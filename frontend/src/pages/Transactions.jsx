@@ -12,7 +12,6 @@ import {
 import AnimatedCard from "../components/ui/AnimatedCard";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import EmptyState from "../components/ui/EmptyState";
-import PageHeader from "../components/ui/PageHeader";
 import {
   getTransactions,
   createTransaction,
@@ -220,12 +219,6 @@ function Transactions() {
       }}
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <PageHeader
-        eyebrow="Money movement"
-        title="Transactions"
-        description="Create, update, search, and review income or expense records with clean category context."
-      />
-
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <AnimatedCard className="p-5">
           <div className="mb-5 flex items-center gap-3">

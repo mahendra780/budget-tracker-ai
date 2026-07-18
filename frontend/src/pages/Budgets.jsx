@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   AlertTriangle,
   Edit3,
-  History,
   Plus,
   Trash2,
   WalletCards,
@@ -13,7 +11,6 @@ import {
 import AnimatedCard from "../components/ui/AnimatedCard";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import EmptyState from "../components/ui/EmptyState";
-import PageHeader from "../components/ui/PageHeader";
 import ProgressBar from "../components/ui/ProgressBar";
 import {
   createBudget,
@@ -153,21 +150,6 @@ function Budgets() {
       }}
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <PageHeader
-        eyebrow="Spending guardrails"
-        title="Budgets"
-        description="Set category limits, track utilization, and spot overspending before it grows."
-        action={
-          <Link
-            to="/budgets/history"
-            className="inline-flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-3 text-sm font-bold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <History size={18} />
-            History
-          </Link>
-        }
-      />
-
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <AnimatedCard className="p-5">
           <div className="mb-5 flex items-center gap-3">

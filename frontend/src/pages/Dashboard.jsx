@@ -31,7 +31,6 @@ import AnimatedCard from "../components/ui/AnimatedCard";
 import ChartCard from "../components/ui/ChartCard";
 import EmptyState from "../components/ui/EmptyState";
 import LoadingSkeleton from "../components/ui/LoadingSkeleton";
-import PageHeader from "../components/ui/PageHeader";
 import ProgressBar from "../components/ui/ProgressBar";
 import StatCard from "../components/ui/StatCard";
 import {
@@ -164,12 +163,6 @@ function Dashboard() {
       }}
       className="px-4 py-6 sm:px-6 lg:px-8"
     >
-      <PageHeader
-        eyebrow="Financial command center"
-        title="Welcome back"
-        description="A premium overview of your cash flow, spending intelligence, active budgets, savings goals, and latest money movement."
-      />
-
       <AnimatedCard className="mb-6 overflow-hidden p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
