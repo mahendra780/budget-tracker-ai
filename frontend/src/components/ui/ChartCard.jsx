@@ -7,7 +7,7 @@ function ChartCard({
   className = "",
 }) {
   return (
-    <AnimatedCard className={`p-5 ${className}`}>
+    <AnimatedCard className={`p-5 sm:p-6 ${className}`}>
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-[var(--text)]">
           {title}

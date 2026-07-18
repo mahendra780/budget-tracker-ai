@@ -1,50 +1,262 @@
 @import "tailwindcss";
 
+/*
+  Application design tokens
+  Keep page markup lean by letting every existing surface, control and data view
+  draw from the same semantic palette.
+*/
 :root {
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  color: #1f2937;
-  background: #f5ede6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --app-bg: #f7f8fc;
+  --app-bg-accent: rgba(79, 70, 229, 0.055);
+  --sidebar-bg: rgba(255, 255, 255, 0.86);
+  --card-bg: #ffffff;
+  --card-border: #e6e8f0;
+  --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.025), 0 12px 28px rgba(15, 23, 42, 0.055);
+  --card-shadow-hover: 0 4px 6px rgba(15, 23, 42, 0.035), 0 18px 36px rgba(15, 23, 42, 0.09);
+  --sidebar-shadow: 1px 0 0 rgba(15, 23, 42, 0.035);
+  --text: #182230;
+  --muted-text: #657085;
+  --subtle-text: #8a94a6;
+  --muted-bg: #f6f7fb;
+  --input-bg: #ffffff;
+  --input-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.02);
+  --table-hover: #fafbff;
+  --skeleton-bg: #e9ecf3;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-soft: #eef2ff;
+  --primary-ring: rgba(79, 70, 229, 0.18);
+  --success: #0f9f82;
+  --success-soft: #e9faf5;
+  --warning: #d97706;
+  --warning-soft: #fff7e8;
+  --danger: #dc3d57;
+  --danger-soft: #fff0f2;
+  --info: #2583d8;
+  --info-soft: #edf6ff;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #10131a;
+  --app-bg-accent: rgba(129, 140, 248, 0.08);
+  --sidebar-bg: rgba(19, 23, 32, 0.9);
+  --card-bg: #181d27;
+  --card-border: #2a3140;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 12px 28px rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.16), 0 18px 36px rgba(0, 0, 0, 0.32);
+  --sidebar-shadow: 1px 0 0 rgba(255, 255, 255, 0.035);
+  --text: #f2f4f8;
+  --muted-text: #a8b0c0;
+  --subtle-text: #7e899d;
+  --muted-bg: #202633;
+  --input-bg: #151a23;
+  --input-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.24);
+  --table-hover: #1d2330;
+  --skeleton-bg: #252c39;
+  --primary: #818cf8;
+  --primary-hover: #a5b4fc;
+  --primary-soft: #24264a;
+  --primary-ring: rgba(129, 140, 248, 0.24);
+  --success: #34c6a3;
+  --success-soft: #153b36;
+  --warning: #f5ad46;
+  --warning-soft: #3c2d16;
+  --danger: #fb7185;
+  --danger-soft: #40202a;
+  --info: #60a5fa;
+  --info-soft: #19314e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--app-bg);
 }
 
 body {
-  margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f5ede6;
+  margin: 0;
+  background:
+    radial-gradient(circle at 78% -12%, var(--app-bg-accent), transparent 30rem),
+    var(--app-bg);
+  color: var(--text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
-[data-theme="light"] {
-  --app-bg: #f5ede6;
-  --sidebar-bg: rgba(255, 255, 255, 0.82);
-  --card-bg: #ffffff;
-  --card-border: rgba(31, 41, 55, 0.08);
-  --card-shadow: 0 18px 45px rgba(31, 41, 55, 0.08);
-  --sidebar-shadow: 18px 0 45px rgba(31, 41, 55, 0.06);
-  --text: #1f2937;
-  --muted-text: #6b7280;
-  --muted-bg: rgba(255, 255, 255, 0.58);
-  --input-bg: #ffffff;
-  --skeleton-bg: rgba(156, 163, 175, 0.22);
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
 }
 
-[data-theme="dark"] {
-  --app-bg: #171412;
-  --sidebar-bg: rgba(27, 24, 22, 0.92);
-  --card-bg: #211d1a;
-  --card-border: rgba(245, 237, 230, 0.1);
-  --card-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
-  --sidebar-shadow: 18px 0 45px rgba(0, 0, 0, 0.22);
-  --text: #f9fafb;
-  --muted-text: #a7a29d;
-  --muted-bg: rgba(255, 255, 255, 0.06);
-  --input-bg: #2b2521;
-  --skeleton-bg: rgba(255, 255, 255, 0.08);
+button {
+  min-height: 2.75rem;
+  border-radius: 0.75rem !important;
+  transition: transform 200ms ease, background-color 200ms ease, border-color 200ms ease,
+    box-shadow 200ms ease, color 200ms ease !important;
+}
+
+button svg {
+  flex: 0 0 auto;
+}
+
+button[aria-label] {
+  min-width: 2.75rem;
+}
+
+button:not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-height: 2.875rem;
+  border-color: var(--card-border) !important;
+  border-radius: 0.75rem !important;
+  background-color: var(--input-bg) !important;
+  color: var(--text);
+  box-shadow: var(--input-shadow);
+  transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease !important;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea)::placeholder {
+  color: var(--subtle-text);
+  opacity: 1;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):hover {
+  border-color: color-mix(in srgb, var(--muted-text) 45%, var(--card-border)) !important;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px var(--primary-ring) !important;
+}
+
+:where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 18%, transparent) !important;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+tbody tr {
+  transition: background-color 160ms ease;
+}
+
+tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--muted-bg) 56%, transparent);
+}
+
+tbody tr:hover {
+  background: var(--table-hover);
+}
+
+::selection {
+  background: var(--primary-soft);
+  color: var(--text);
+}
+
+/* Legacy utility colour aliases mapped to the semantic palette. */
+[class*="bg-[#F97316]"] { background-color: var(--primary) !important; }
+[class*="text-[#F97316]"] { color: var(--primary) !important; }
+[class*="border-[#F97316]"] { border-color: var(--primary) !important; }
+[class*="hover:bg-orange-600"]:hover { background-color: var(--primary-hover) !important; }
+[class*="bg-[#FFF4EC]"] { background-color: var(--primary-soft) !important; }
+[class*="bg-[#14B8A6]"], [class*="bg-[#EAFBF8]"] { background-color: var(--success-soft) !important; }
+[class*="text-[#14B8A6]"], [class*="text-[#0F766E]"] { color: var(--success) !important; }
+[class*="border-[#14B8A6]"] { border-color: var(--success) !important; }
+[class*="hover:bg-teal-600"]:hover { background-color: var(--success) !important; }
+[class*="bg-rose-50"], [class*="bg-rose-100"] { background-color: var(--danger-soft) !important; }
+[class*="text-rose-600"], [class*="text-rose-700"] { color: var(--danger) !important; }
+[class*="border-rose-200"] { border-color: color-mix(in srgb, var(--danger) 32%, var(--card-border)) !important; }
+[class*="bg-rose-600"], [class*="bg-rose-500"] { background-color: var(--danger) !important; }
+[class*="hover:bg-rose-700"]:hover { background-color: color-mix(in srgb, var(--danger) 86%, black) !important; }
+[class*="text-slate-950"] { color: var(--text) !important; }
+[class*="text-slate-600"], [class*="text-slate-700"] { color: var(--muted-text) !important; }
+[class*="bg-slate-100"] { background-color: var(--muted-bg) !important; }
+
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.sidebar-scroll:hover {
+  scrollbar-color: var(--card-border) transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 0.875rem;
+  }
+
+  button {
+    min-height: 2.625rem;
+  }
 }

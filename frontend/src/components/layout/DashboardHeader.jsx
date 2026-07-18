@@ -20,34 +20,36 @@ function DashboardHeader({
   const showBudgetHistory = location.pathname === "/budgets";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[var(--card-border)] bg-[var(--app-bg)]/85 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
-      <div className="flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-30 border-b border-[var(--card-border)] bg-[var(--app-bg)]/88 px-4 shadow-[0_1px_0_rgba(15,23,42,0.02)] backdrop-blur-xl sm:px-6 lg:px-8">
+      <div className="flex h-16 items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onMobileToggle}
-            className="rounded-2xl border border-[var(--card-border)] p-2 text-[var(--text)] lg:hidden"
+            className="rounded-xl border border-[var(--card-border)] p-2 text-[var(--text)] hover:bg-[var(--muted-bg)] lg:hidden"
             aria-label="Toggle navigation"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#F97316]">
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#F97316]">
               Budget Tracker
             </p>
-            <h1 className="text-xl font-bold text-[var(--text)]">
+            <h1 className="truncate text-lg font-bold tracking-tight text-[var(--text)]">
               {title}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {showBudgetHistory && (
             <Link
               to="/budgets/history"
               aria-label="Budget history"
-              className="flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="flex items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm hover:-translate-y-0.5 hover:shadow-md"
             >
               <History size={18} />
               <span className="hidden sm:inline">History</span>
@@ -57,7 +59,9 @@ function DashboardHeader({
           <button
             type="button"
             onClick={onThemeToggle}
-            className="flex items-center gap-2 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            className="flex items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-sm font-semibold text-[var(--text)] shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            aria-pressed={theme === "dark"}
           >
             {theme === "dark" ? (
               <Sun size={18} />
@@ -72,7 +76,11 @@ function DashboardHeader({
       </div>
 
       {mobileOpen && (
-        <nav className="mt-4 grid gap-2 rounded-3xl border border-[var(--card-border)] bg-[var(--card-bg)] p-3 shadow-xl lg:hidden">
+        <nav
+          id="mobile-navigation"
+          className="mb-3 grid gap-1.5 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-2 shadow-xl lg:hidden"
+          aria-label="Mobile navigation"
+        >
           {navigationLinks.map((link) => {
             const Icon = link.icon;
 
@@ -83,7 +91,7 @@ function DashboardHeader({
                 end={link.to === "/"}
                 onClick={onMobileToggle}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold ${
+                  `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                     isActive
                       ? "bg-[#F97316] text-white"
                       : "text-[var(--muted-text)] hover:bg-[var(--muted-bg)]"

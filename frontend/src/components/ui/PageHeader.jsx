@@ -5,14 +5,14 @@ function PageHeader({
   action,
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         {eyebrow && (
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#F97316]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#F97316]">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-2 text-3xl font-bold text-[var(--text)]">
+        <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
           {title}
         </h1>
         {description && (
