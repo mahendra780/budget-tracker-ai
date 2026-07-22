@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   AlertTriangle,
   Clapperboard,
@@ -86,8 +86,8 @@ const getBudgetStatusMeta = (percentage) => {
   if (percentage > 100) {
     return {
       label: "Over budget",
-      progressClassName: "bg-[#7f1d1d]",
-      badgeClassName: "bg-[#7f1d1d] text-[#fee2e2]",
+      progressClassName: "bg-[var(--danger)]",
+      badgeClassName: "bg-[var(--danger-soft)] text-[var(--danger)]",
       amountClassName: "text-[var(--danger)]",
       hasAlert: true,
     };
@@ -124,6 +124,7 @@ const getBudgetStatusMeta = (percentage) => {
 
 function BudgetProgress({ value, status }) {
   const width = Math.min(Math.max(Number(value) || 0, 0), 100);
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div
@@ -136,9 +137,9 @@ function BudgetProgress({ value, status }) {
       className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--muted-bg)]"
     >
       <motion.div
-        initial={{ width: 0 }}
+        initial={prefersReducedMotion ? false : { width: 0 }}
         animate={{ width: `${width}%` }}
-        transition={{ duration: 0.75, ease: "easeOut" }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.75, ease: "easeOut" }}
         className={`h-full rounded-full ${status.progressClassName}`}
       />
     </div>

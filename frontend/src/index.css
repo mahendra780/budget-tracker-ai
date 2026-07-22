@@ -105,6 +105,10 @@ textarea {
   font: inherit;
 }
 
+a {
+  color: inherit;
+}
+
 button,
 a,
 input,
@@ -135,6 +139,11 @@ button:not(:disabled):active {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+button[aria-busy="true"],
+[role="button"][aria-busy="true"] {
+  cursor: progress;
 }
 
 :where(button, a, input, select, textarea):focus-visible {
@@ -210,6 +219,67 @@ tbody tr:hover {
   color: var(--text);
 }
 
+/* Shared accessibility and motion safeguards for every page. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: none) {
+  button:not(:disabled):hover,
+  a:hover {
+    transform: none !important;
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--card-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: var(--card-border);
+  background-clip: padding-box;
+}
+
+.loading-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--skeleton-bg);
+}
+
+.loading-skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+[data-theme="dark"] .loading-skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Legacy utility colour aliases mapped to the semantic palette. */
 [class*="bg-[#F97316]"] { background-color: var(--primary) !important; }
 [class*="text-[#F97316]"] { color: var(--primary) !important; }
@@ -249,6 +319,55 @@ tbody tr:hover {
 
 .sidebar-scroll:hover::-webkit-scrollbar-thumb {
   background: var(--card-border);
+}
+
+.Toastify__toast {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text);
+  box-shadow: var(--card-shadow);
+  padding: 1rem 1rem 0.85rem;
+  min-height: 3rem;
+}
+
+.Toastify__toast-body {
+  margin: 0;
+  padding: 0;
+}
+
+.Toastify__toast--success {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.Toastify__toast--error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.Toastify__toast--warning {
+  border-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.Toastify__toast--info {
+  border-color: var(--info);
+  background: var(--info-soft);
+}
+
+.Toastify__progress-bar {
+  background: var(--primary);
+}
+
+.Toastify__close-button {
+  color: var(--muted-text);
+  opacity: 0.8;
+  transition: opacity 160ms ease;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
 }
 
 @media (max-width: 640px) {

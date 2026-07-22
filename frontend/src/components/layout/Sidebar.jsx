@@ -29,22 +29,22 @@ function Sidebar({ collapsed, onToggle }) {
         duration: 0.22,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="sticky top-0 hidden h-screen shrink-0 border-r border-(--card-border) bg-(--sidebar-bg) p-3 shadow-(--sidebar-shadow) backdrop-blur-xl lg:block"
+      className="sticky top-0 hidden h-screen shrink-0 border-r border-[var(--card-border)] bg-[var(--sidebar-bg)] p-3 shadow-[var(--sidebar-shadow)] backdrop-blur-xl lg:block"
     >
       <div className="flex h-full min-h-0 flex-col">
         {/* Logo */}
         <div className={`flex items-center gap-3 px-1 ${collapsed ? "justify-center" : "justify-between"}`}>
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F97316] text-white shadow-lg shadow-indigo-500/20">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)] text-white shadow-lg shadow-indigo-500/20">
               <PiggyBank size={24} />
             </div>
 
             {!collapsed && (
               <div className="min-w-0">
-                <p className="truncate text-[15px] font-bold tracking-tight text-(--text)">
+                <p className="truncate text-[15px] font-bold tracking-tight text-[var(--text)]">
                   Budget Tracker
                 </p>
-                <p className="truncate text-xs text-(--muted-text)">
+                <p className="truncate text-xs text-[var(--muted-text)]">
                   Finance OS
                 </p>
               </div>
@@ -55,7 +55,7 @@ function Sidebar({ collapsed, onToggle }) {
             <button
               type="button"
               onClick={onToggle}
-              className="h-9 min-h-9 w-9 min-w-9 rounded-lg border border-(--card-border) p-2 text-(--muted-text) hover:bg-(--muted-bg) hover:text-(--text)"
+              className="h-9 min-h-9 w-9 min-w-9 rounded-lg border border-[var(--card-border)] p-2 text-[var(--muted-text)] hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft size={17} />
@@ -69,7 +69,7 @@ function Sidebar({ collapsed, onToggle }) {
           aria-label="Primary navigation"
         >
           {!collapsed && (
-            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-(--subtle-text)">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--subtle-text)]">
               Workspace
             </p>
           )}
@@ -85,8 +85,8 @@ function Sidebar({ collapsed, onToggle }) {
                 className={({ isActive }) =>
                   `group relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-[#FFF4EC] text-[#F97316] shadow-sm"
-                      : "text-(--muted-text) hover:bg-(--muted-bg) hover:text-(--text)"
+                      ? "bg-[var(--primary-soft)] text-[var(--primary)] shadow-sm"
+                      : "text-[var(--muted-text)] hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
                   } ${collapsed ? "justify-center px-0" : ""}`
                 }
               >
@@ -95,7 +95,7 @@ function Sidebar({ collapsed, onToggle }) {
                     {isActive && (
                       <motion.span
                         layoutId="sidebar-active-indicator"
-                        className="absolute left-0 h-5 w-[3px] rounded-r-full bg-[#F97316]"
+                        className="absolute left-0 h-5 w-[3px] rounded-r-full bg-[var(--primary)]"
                         transition={{ duration: 0.2 }}
                       />
                     )}
@@ -116,28 +116,28 @@ function Sidebar({ collapsed, onToggle }) {
             className={({ isActive }) =>
               `group flex items-center gap-3 rounded-xl p-2 transition-all duration-200 ${
                 isActive
-                  ? "bg-[#FFF4EC]"
+                  ? "bg-[var(--primary-soft)]"
                   : "hover:bg-(--muted-bg)"
               } ${collapsed ? "justify-center" : ""}`
             }
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#14B8A6] text-xs font-bold text-white shadow-sm shadow-emerald-500/20">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-xs font-bold text-white shadow-sm shadow-emerald-500/20">
               {initials}
             </span>
 
             {!collapsed && (
               <>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-(--text)">
+                  <span className="block truncate text-sm font-semibold text-[var(--text)]">
                     {user?.full_name || "Your profile"}
                   </span>
-                  <span className="mt-0.5 block truncate text-xs text-(--muted-text)">
+                  <span className="mt-0.5 block truncate text-xs text-[var(--muted-text)]">
                     {user?.email || "Manage your account"}
                   </span>
                 </span>
                 <UserRound
                   size={16}
-                  className="shrink-0 text-(--subtle-text) transition-colors group-hover:text-[#F97316]"
+                  className="shrink-0 text-[var(--subtle-text)] transition-colors group-hover:text-[var(--primary)]"
                 />
               </>
             )}
@@ -147,7 +147,7 @@ function Sidebar({ collapsed, onToggle }) {
             <button
               type="button"
               onClick={onToggle}
-              className="mt-2 h-9 min-h-9 w-full min-w-0 rounded-lg border border-(--card-border) p-2 text-(--muted-text) hover:bg-(--muted-bg) hover:text-(--text)"
+              className="mt-2 h-9 min-h-9 w-full min-w-0 rounded-lg border border-[var(--card-border)] p-2 text-[var(--muted-text)] hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
               aria-label="Expand sidebar"
             >
               <ChevronRight size={17} />

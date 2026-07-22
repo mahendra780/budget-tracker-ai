@@ -1,34 +1,41 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { clampPercentage } from "../../utils/formatters";
 
 function ProgressBar({
   value,
   tone = "primary",
   height = "h-2.5",
+  label = "Progress",
 }) {
   const width = clampPercentage(value);
+  const prefersReducedMotion = useReducedMotion();
 
   const toneClasses = {
-    primary: "bg-[#F97316]",
-    secondary: "bg-[#14B8A6]",
-    success: "bg-emerald-500",
-    danger: "bg-rose-500",
-    warning: "bg-amber-500",
+    primary: "bg-[var(--primary)]",
+    secondary: "bg-[var(--success)]",
+    success: "bg-[var(--success)]",
+    danger: "bg-[var(--danger)]",
+    warning: "bg-[var(--warning)]",
   };
 
   return (
     <div
       className={`${height} w-full overflow-hidden rounded-full bg-[var(--muted-bg)]`}
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(width)}
     >
       <motion.div
-        initial={{
+        initial={prefersReducedMotion ? false : {
           width: 0,
         }}
         animate={{
           width: `${width}%`,
         }}
         transition={{
-          duration: 0.75,
+          duration: prefersReducedMotion ? 0 : 0.75,
           ease: "easeOut",
         }}
         className={`h-full rounded-full ${

@@ -543,7 +543,11 @@ function Goals() {
                               {progress.toFixed(0)}%
                             </span>
                           </div>
-                          <ProgressBar value={progress} tone={status.tone} />
+                          <ProgressBar
+                            value={progress}
+                            tone={status.tone}
+                            label={`${goal.goal_name} savings progress`}
+                          />
                           <div className="mt-2.5 flex items-center justify-between gap-3 text-xs">
                             <span className="text-[var(--muted-text)]">
                               {formatCurrency(goal.current_amount)} saved
@@ -630,6 +634,10 @@ function Goals() {
       {contributionGoal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contribution-dialog-title"
+            tabIndex={-1}
             initial={{
               opacity: 0,
               scale: 0.96,
@@ -643,11 +651,11 @@ function Goals() {
             className="w-full max-w-md rounded-3xl bg-[var(--card-bg)] p-6 shadow-2xl"
           >
             <div className="mb-5 flex items-center gap-3">
-              <div className="rounded-2xl bg-[#EAFBF8] p-3 text-[#14B8A6]">
+              <div className="rounded-2xl bg-[var(--success-soft)] p-3 text-[var(--success)]">
                 <Wallet size={22} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-[var(--text)]">
+                <h2 id="contribution-dialog-title" className="text-lg font-bold text-[var(--text)]">
                   {contributionAction === "add"
                     ? "Add Savings"
                     : "Withdraw Savings"}
@@ -663,6 +671,8 @@ function Goals() {
               className="space-y-4"
             >
               <input
+                autoFocus
+                aria-label="Contribution amount"
                 type="number"
                 min="1"
                 placeholder="Amount"
@@ -670,7 +680,7 @@ function Goals() {
                 onChange={(e) =>
                   setContributionAmount(e.target.value)
                 }
-                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#14B8A6] focus:ring-4 focus:ring-teal-500/10"
+                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[var(--success)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--success)_18%,transparent)]"
               />
 
               <div className="flex justify-end gap-3">
@@ -683,7 +693,7 @@ function Goals() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-2xl bg-[#14B8A6] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/20 transition hover:bg-teal-600"
+                  className="rounded-2xl bg-[var(--success)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:brightness-95"
                 >
                   Save
                 </button>
@@ -696,6 +706,10 @@ function Goals() {
       {historyGoal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm">
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="history-dialog-title"
+            tabIndex={-1}
             initial={{
               opacity: 0,
               scale: 0.96,
@@ -710,7 +724,7 @@ function Goals() {
           >
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-[var(--text)]">
+                <h2 id="history-dialog-title" className="text-lg font-bold text-[var(--text)]">
                   Contribution History
                 </h2>
                 <p className="text-sm text-[var(--muted-text)]">
@@ -719,6 +733,7 @@ function Goals() {
               </div>
               <button
                 type="button"
+                autoFocus
                 onClick={closeHistoryModal}
                 className="rounded-2xl border border-[var(--card-border)] px-4 py-2 text-sm font-bold text-[var(--text)] transition hover:bg-[var(--muted-bg)]"
               >
@@ -742,8 +757,8 @@ function Goals() {
                     <span
                       className={`font-bold capitalize ${
                         item.action === "add"
-                          ? "text-emerald-600"
-                          : "text-rose-600"
+                          ? "text-[var(--success)]"
+                          : "text-[var(--danger)]"
                       }`}
                     >
                       {item.action}

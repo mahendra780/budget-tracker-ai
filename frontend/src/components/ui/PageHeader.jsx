@@ -8,7 +8,7 @@ function PageHeader({
     <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         {eyebrow && (
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#F97316]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--primary)]">
             {eyebrow}
           </p>
         )}

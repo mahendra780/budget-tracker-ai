@@ -68,11 +68,11 @@ function BudgetHistory() {
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-[var(--card-border)] bg-[var(--muted-bg)] text-xs uppercase tracking-[0.12em] text-[var(--muted-text)]">
                 <tr>
-                  <th className="px-5 py-4">Month</th>
-                  <th className="px-5 py-4">Category</th>
-                  <th className="px-5 py-4">Limit</th>
-                  <th className="px-5 py-4">Spent</th>
-                  <th className="px-5 py-4">Remaining</th>
+                  <th scope="col" className="px-5 py-4">Month</th>
+                  <th scope="col" className="px-5 py-4">Category</th>
+                  <th scope="col" className="px-5 py-4 text-right">Limit</th>
+                  <th scope="col" className="px-5 py-4 text-right">Spent</th>
+                  <th scope="col" className="px-5 py-4 text-right">Remaining</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,18 +88,22 @@ function BudgetHistory() {
                       <span className="inline-flex items-center gap-2">
                         <WalletCards
                           size={16}
-                          className="text-[#F97316]"
+                          className="text-[var(--primary)]"
                         />
                         {item.category}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[var(--muted-text)]">
+                    <td className="px-5 py-4 text-right tabular-nums text-[var(--muted-text)]">
                       {formatCurrency(item.limit)}
                     </td>
-                    <td className="px-5 py-4 text-[var(--muted-text)]">
+                    <td className="px-5 py-4 text-right tabular-nums text-[var(--muted-text)]">
                       {formatCurrency(item.spent)}
                     </td>
-                    <td className="px-5 py-4 font-semibold text-[#14B8A6]">
+                    <td className={`px-5 py-4 text-right font-semibold tabular-nums ${
+                      Number(item.remaining) < 0
+                        ? "text-[var(--danger)]"
+                        : "text-[var(--success)]"
+                    }`}>
                       {formatCurrency(item.remaining)}
                     </td>
                   </tr>

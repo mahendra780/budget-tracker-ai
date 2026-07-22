@@ -40,10 +40,10 @@ function StatCard({
   }, [value]);
 
   const toneClasses = {
-    primary: "bg-[#FFF4EC] text-[#F97316]",
-    secondary: "bg-[#EAFBF8] text-[#14B8A6]",
-    success: "bg-emerald-50 text-emerald-600",
-    danger: "bg-rose-50 text-rose-600",
+    primary: "bg-[var(--primary-soft)] text-[var(--primary)]",
+    secondary: "bg-[var(--success-soft)] text-[var(--success)]",
+    success: "bg-[var(--success-soft)] text-[var(--success)]",
+    danger: "bg-[var(--danger-soft)] text-[var(--danger)]",
   };
 
   return (

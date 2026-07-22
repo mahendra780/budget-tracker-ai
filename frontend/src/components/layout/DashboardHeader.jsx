@@ -35,7 +35,7 @@ function DashboardHeader({
           </button>
 
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#F97316]">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--primary)]">
               Budget Tracker
             </p>
             <h1 className="truncate text-lg font-bold tracking-tight text-[var(--text)]">
@@ -93,7 +93,7 @@ function DashboardHeader({
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-[#F97316] text-white"
+                      ? "bg-[var(--primary)] text-white"
                       : "text-[var(--muted-text)] hover:bg-[var(--muted-bg)]"
                   }`
                 }

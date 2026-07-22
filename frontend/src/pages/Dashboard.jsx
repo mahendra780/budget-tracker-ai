@@ -211,23 +211,23 @@ function Dashboard() {
       className="px-4 py-6 sm:px-6 sm:py-7 lg:px-8"
     >
       <AnimatedCard className="relative mb-6 overflow-hidden p-5 sm:p-6 lg:p-7">
-        <div className="pointer-events-none absolute -right-18 -top-24 h-64 w-64 rounded-full bg-[#FFF4EC] blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 right-1/3 h-28 w-28 rounded-full bg-[#EAFBF8] blur-3xl" />
+        <div className="pointer-events-none absolute -right-18 -top-24 h-64 w-64 rounded-full bg-[var(--primary-soft)] blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 right-1/3 h-28 w-28 rounded-full bg-[var(--success-soft)] blur-3xl" />
 
         <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--muted-text)]">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--card-border)] bg-[var(--muted-bg)] px-3 py-1.5">
-                <CalendarDays size={14} className="text-[#F97316]" />
+                <CalendarDays size={14} className="text-[var(--primary)]" />
                 {dashboardDate}
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EAFBF8] px-3 py-1.5 text-[#0F766E]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success-soft)] px-3 py-1.5 text-[var(--success)]">
                 <Sparkles size={14} />
                 Financial overview
               </span>
             </div>
 
-            <p className="mt-5 text-sm font-semibold text-[#F97316]">
+            <p className="mt-5 text-sm font-semibold text-[var(--primary)]">
               {greetingForCurrentTime()}, {userName}
               <span aria-hidden="true"> &#128075;</span>
             </p>
@@ -435,7 +435,7 @@ function Dashboard() {
                         <span className="rounded-full bg-[var(--muted-bg)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[var(--muted-text)]">
                           {transaction.category}
                         </span>
-                        <span className={`text-xs font-medium ${isIncome ? "text-[#0F766E]" : "text-rose-600"}`}>
+                        <span className={`text-xs font-medium ${isIncome ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                           {isIncome ? "Income" : "Expense"}
                         </span>
                       </div>
@@ -443,7 +443,7 @@ function Dashboard() {
                     <p className="text-xs font-medium text-[var(--muted-text)] sm:text-right">
                       {formatTransactionDate(transaction.date)}
                     </p>
-                    <p className={`font-bold tabular-nums sm:text-right ${isIncome ? "text-[#0F766E]" : "text-rose-600"}`}>
+                    <p className={`font-bold tabular-nums sm:text-right ${isIncome ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
                       {isIncome ? "+" : "-"}
                       {formatCurrency(transaction.amount)}
                     </p>
@@ -460,8 +460,8 @@ function Dashboard() {
           className="xl:col-span-2"
         >
           <div className="space-y-3">
-            <div className="rounded-2xl border border-[var(--card-border)] bg-[#FFF4EC] p-4">
-              <div className="flex items-center gap-2 text-[#F97316]">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--primary-soft)] p-4">
+              <div className="flex items-center gap-2 text-[var(--primary)]">
                 <BrainCircuit size={18} />
                 <p className="text-xs font-bold uppercase tracking-[0.1em]">
                   Spending observation
@@ -483,8 +483,8 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-[var(--card-border)] bg-[#EAFBF8] p-4">
-              <div className="flex items-center gap-2 text-[#0F766E]">
+            <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--success-soft)] p-4">
+              <div className="flex items-center gap-2 text-[var(--success)]">
                 <Sparkles size={18} />
                 <p className="text-xs font-bold uppercase tracking-[0.1em]">
                   Insight
@@ -519,7 +519,7 @@ function Dashboard() {
                   className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-4 transition-shadow duration-200 hover:shadow-sm"
                 >
                   <div className="flex items-center gap-2 text-[var(--text)]">
-                    <Lightbulb size={17} className="text-[#F97316]" />
+                    <Lightbulb size={17} className="text-[var(--primary)]" />
                     <p className="text-xs font-bold uppercase tracking-[0.1em]">
                       {item.type === "warning" ? "Budget recommendation" : "Recommendation"}
                     </p>
@@ -563,7 +563,12 @@ function Dashboard() {
                         {formatCurrency(item.amount)}
                       </span>
                     </div>
-                    <ProgressBar value={percentage} tone="primary" height="h-2" />
+                    <ProgressBar
+                      value={percentage}
+                      tone="primary"
+                      height="h-2"
+                      label={`${item.category} spending share`}
+                    />
                   </div>
                 );
               })
@@ -599,11 +604,16 @@ function Dashboard() {
                           {formatCurrency(budget.spent)} spent
                         </p>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isOverBudget ? "bg-rose-100 text-rose-700" : "bg-[#EAFBF8] text-[#0F766E]"}`}>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isOverBudget ? "bg-[var(--danger-soft)] text-[var(--danger)]" : "bg-[var(--success-soft)] text-[var(--success)]"}`}>
                         {isOverBudget ? "Over budget" : "On track"}
                       </span>
                     </div>
-                    <ProgressBar value={percentage} tone={isOverBudget ? "danger" : "secondary"} height="h-2" />
+                    <ProgressBar
+                      value={percentage}
+                      tone={isOverBudget ? "danger" : "secondary"}
+                      height="h-2"
+                      label={`${budget.category} budget utilization`}
+                    />
                     <div className="mt-2.5 flex justify-between text-xs text-[var(--muted-text)]">
                       <span>{percentage.toFixed(0)}% used</span>
                       <span>{isOverBudget ? `${formatCurrency(Math.abs(remaining))} over` : `${formatCurrency(remaining)} left`}</span>
@@ -643,13 +653,18 @@ function Dashboard() {
                         </p>
                       </div>
                       {isComplete && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAFBF8] px-2.5 py-1 text-[11px] font-bold text-[#0F766E]">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--success-soft)] px-2.5 py-1 text-[11px] font-bold text-[var(--success)]">
                           <CheckCircle2 size={13} />
                           Complete
                         </span>
                       )}
                     </div>
-                    <ProgressBar value={progress} tone={isComplete ? "success" : "primary"} height="h-2" />
+                    <ProgressBar
+                      value={progress}
+                      tone={isComplete ? "success" : "primary"}
+                      height="h-2"
+                      label={`${goal.goal_name} savings progress`}
+                    />
                     <div className="mt-2.5 flex justify-between text-xs text-[var(--muted-text)]">
                       <span>{progress.toFixed(0)}% complete</span>
                       <span>{formatCurrency(goal.remaining_amount)} left</span>
@@ -665,7 +680,7 @@ function Dashboard() {
       <section className="mt-6" aria-labelledby="quick-actions-title">
         <div className="mb-3 flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#F97316]">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
               Keep moving
             </p>
             <h2 id="quick-actions-title" className="mt-1 text-lg font-bold tracking-tight text-[var(--text)]">
@@ -677,9 +692,9 @@ function Dashboard() {
           {quickActions.map((action) => {
             const Icon = action.icon;
             const toneClasses = {
-              primary: "bg-[#FFF4EC] text-[#F97316]",
+              primary: "bg-[var(--primary-soft)] text-[var(--primary)]",
               warning: "bg-[var(--warning-soft)] text-[var(--warning)]",
-              success: "bg-[#EAFBF8] text-[#0F766E]",
+              success: "bg-[var(--success-soft)] text-[var(--success)]",
             };
 
             return (
@@ -699,7 +714,7 @@ function Dashboard() {
                     {action.description}
                   </span>
                 </span>
-                <ArrowRight size={18} className="shrink-0 text-[var(--subtle-text)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[#F97316]" />
+                <ArrowRight size={18} className="shrink-0 text-[var(--subtle-text)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--primary)]" />
               </Link>
             );
           })}
