@@ -39,17 +39,7 @@ import LoadingSkeleton from "../components/ui/LoadingSkeleton";
 import ProgressBar from "../components/ui/ProgressBar";
 import StatCard from "../components/ui/StatCard";
 import { useAuth } from "../context/AuthContext";
-import {
-  getRecommendations,
-  getMonthlyTrend,
-  getSpendingBreakdown,
-  getSummary as getAiSummary,
-  getTopCategory,
-} from "../services/aiService";
-import { getBudgetStatus } from "../services/budgetService";
-import { getSummary } from "../services/dashboardService";
-import { getGoalProgress } from "../services/goalService";
-import { getTransactions } from "../services/transactionService";
+import { getOverview } from "../services/dashboardService";
 import { formatCurrency } from "../utils/formatters";
 import { notifyError } from "../utils/notifications";
 
@@ -122,43 +112,25 @@ function Dashboard() {
   const [budgets, setBudgets] = useState([]);
   const [goals, setGoals] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([
-      getSummary(),
-      getTopCategory(),
-      getSpendingBreakdown(),
-      getMonthlyTrend(),
-      getAiSummary(),
-      getRecommendations(),
-      getBudgetStatus(),
-      getGoalProgress(),
-      getTransactions(),
-    ])
-      .then(([
-        summaryData,
-        topCategoryData,
-        breakdownData,
-        trendData,
-        aiSummaryData,
-        recommendationsData,
-        budgetData,
-        goalData,
-        transactionData,
-      ]) => {
+    getOverview()
+      .then((overview) => {
         if (isMounted) {
-          setSummary(summaryData);
-          setTopCategory(topCategoryData);
-          setExpenseBreakdown(breakdownData);
-          setMonthlyTrend(trendData);
-          setAiSummary(aiSummaryData.summary || []);
-          setRecommendations(recommendationsData);
-          setBudgets(budgetData);
-          setGoals(goalData);
-          setTransactions(transactionData);
+          setSummary(overview.summary);
+          setBudgets(overview.budgets);
+          setGoals(overview.goals);
+          setTransactions(overview.recent_transactions);
+          setExpenseBreakdown(overview.expense_breakdown);
+          setMonthlyTrend(overview.monthly_trend);
+          setTopCategory(overview.top_category);
+          setAiSummary(overview.ai_summary.summary || []);
+          setRecommendations(overview.recommendations);
         }
       })
       .catch((error) => {
@@ -171,7 +143,9 @@ function Dashboard() {
       })
       .finally(() => {
         if (isMounted) {
-          setIsLoading(false);
+          setSummaryLoading(false);
+          setChartLoading(false);
+          setAiLoading(false);
         }
       });
 
@@ -193,9 +167,12 @@ function Dashboard() {
       .slice(0, 6);
   }, [transactions]);
 
-  const overBudgetCount = budgets.filter(
-    (budget) => Number(budget.percentage_used || 0) > 100
-  ).length;
+  const overBudgetCount = useMemo(
+    () => budgets.filter(
+      (budget) => Number(budget.percentage_used || 0) > 100
+    ).length,
+    [budgets]
+  );
   const userName = user?.full_name?.split(" ")[0] || "there";
   const dashboardDate = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
@@ -266,38 +243,46 @@ function Dashboard() {
         className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Financial summary"
       >
-        <StatCard
-          title="Total Balance"
-          value={summary.balance}
-          icon={Wallet}
-          tone="primary"
-          helper="Available after expenses and goals"
-          delay={0.02}
-        />
-        <StatCard
-          title="Total Income"
-          value={summary.total_income}
-          icon={ArrowUpRight}
-          tone="success"
-          helper="All recorded inflows"
-          delay={0.06}
-        />
-        <StatCard
-          title="Total Expenses"
-          value={summary.total_expense}
-          icon={ArrowDownRight}
-          tone="danger"
-          helper="All recorded outflows"
-          delay={0.1}
-        />
-        <StatCard
-          title="Savings"
-          value={summary.goal_savings}
-          icon={PiggyBank}
-          tone="secondary"
-          helper="Allocated across your goals"
-          delay={0.14}
-        />
+        {summaryLoading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <LoadingSkeleton key={index} rows={2} />
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Total Balance"
+              value={summary.balance}
+              icon={Wallet}
+              tone="primary"
+              helper="Available after expenses and goals"
+              delay={0.02}
+            />
+            <StatCard
+              title="Total Income"
+              value={summary.total_income}
+              icon={ArrowUpRight}
+              tone="success"
+              helper="All recorded inflows"
+              delay={0.06}
+            />
+            <StatCard
+              title="Total Expenses"
+              value={summary.total_expense}
+              icon={ArrowDownRight}
+              tone="danger"
+              helper="All recorded outflows"
+              delay={0.1}
+            />
+            <StatCard
+              title="Savings"
+              value={summary.goal_savings}
+              icon={PiggyBank}
+              tone="secondary"
+              helper="Allocated across your goals"
+              delay={0.14}
+            />
+          </>
+        )}
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-5" aria-label="Spending charts">
@@ -307,7 +292,7 @@ function Dashboard() {
           className="xl:col-span-2"
         >
           <div className="h-76 sm:h-80">
-            {isLoading ? (
+            {chartLoading ? (
               <LoadingSkeleton rows={3} />
             ) : expenseBreakdown.length === 0 ? (
               <EmptyState
@@ -355,7 +340,7 @@ function Dashboard() {
           className="xl:col-span-3"
         >
           <div className="h-76 sm:h-80">
-            {isLoading ? (
+            {chartLoading ? (
               <LoadingSkeleton rows={3} />
             ) : monthlyTrend.length === 0 ? (
               <EmptyState
@@ -411,7 +396,9 @@ function Dashboard() {
           description="Latest activity from your transaction ledger"
           className="xl:col-span-3"
         >
-          {recentTransactions.length === 0 ? (
+          {summaryLoading ? (
+            <LoadingSkeleton rows={4} />
+          ) : recentTransactions.length === 0 ? (
             <EmptyState
               icon={ReceiptText}
               title="No recent transactions"
@@ -460,6 +447,10 @@ function Dashboard() {
           className="xl:col-span-2"
         >
           <div className="space-y-3">
+            {aiLoading ? (
+              <LoadingSkeleton rows={4} />
+            ) : (
+              <>
             <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--primary-soft)] p-4">
               <div className="flex items-center gap-2 text-[var(--primary)]">
                 <BrainCircuit size={18} />
@@ -530,6 +521,8 @@ function Dashboard() {
                 </motion.div>
               ))
             )}
+              </>
+            )}
           </div>
         </ChartCard>
       </section>
@@ -540,7 +533,9 @@ function Dashboard() {
           description="Your highest spending categories"
         >
           <div className="space-y-4">
-            {expenseBreakdown.length === 0 ? (
+            {chartLoading ? (
+              <LoadingSkeleton rows={3} />
+            ) : expenseBreakdown.length === 0 ? (
               <EmptyState
                 icon={ReceiptText}
                 title="No category statistics"
@@ -581,7 +576,9 @@ function Dashboard() {
           description={`${budgets.length} active budgets, ${overBudgetCount} over budget`}
         >
           <div className="space-y-3">
-            {budgets.length === 0 ? (
+            {summaryLoading ? (
+              <LoadingSkeleton rows={3} />
+            ) : budgets.length === 0 ? (
               <EmptyState
                 icon={CircleDollarSign}
                 title="No budgets yet"
@@ -630,7 +627,9 @@ function Dashboard() {
           description="Savings momentum and completion status"
         >
           <div className="space-y-3">
-            {goals.length === 0 ? (
+            {summaryLoading ? (
+              <LoadingSkeleton rows={3} />
+            ) : goals.length === 0 ? (
               <EmptyState
                 icon={Target}
                 title="No goals yet"

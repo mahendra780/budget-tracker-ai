@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import {
   History,
@@ -109,4 +110,4 @@ function DashboardHeader({
   );
 }
 
-export default DashboardHeader;
+export default memo(DashboardHeader);

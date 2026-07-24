@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -159,4 +160,4 @@ function Sidebar({ collapsed, onToggle }) {
   );
 }
 
-export default Sidebar;
+export default memo(Sidebar);

@@ -35,10 +35,7 @@ import {
   updateRecurringTransaction,
 } from "../services/recurringService";
 import { formatCurrency } from "../utils/formatters";
-import {
-  getCategoriesByType,
-  resolveCategory,
-} from "../utils/categories";
+import { getCategoriesByType, resolveCategory } from "../utils/categories";
 import {
   notifyError,
   notifySuccess,
@@ -63,15 +60,42 @@ const titleCase = (value) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1) : "";
 
 const categoryMeta = {
-  Food: { icon: Utensils, className: "bg-[var(--warning-soft)] text-[var(--warning)]" },
-  Travel: { icon: Plane, className: "bg-[var(--info-soft)] text-[var(--info)]" },
-  Shopping: { icon: ShoppingBag, className: "bg-[var(--primary-soft)] text-[var(--primary)]" },
-  Bills: { icon: ReceiptText, className: "bg-[var(--danger-soft)] text-[var(--danger)]" },
-  Entertainment: { icon: Clapperboard, className: "bg-[var(--primary-soft)] text-[var(--primary)]" },
-  Healthcare: { icon: Heart, className: "bg-[var(--danger-soft)] text-[var(--danger)]" },
-  Education: { icon: GraduationCap, className: "bg-[var(--info-soft)] text-[var(--info)]" },
-  Savings: { icon: PiggyBank, className: "bg-[var(--success-soft)] text-[var(--success)]" },
-  Salary: { icon: WalletCards, className: "bg-[var(--success-soft)] text-[var(--success)]" },
+  Food: {
+    icon: Utensils,
+    className: "bg-[var(--warning-soft)] text-[var(--warning)]",
+  },
+  Travel: {
+    icon: Plane,
+    className: "bg-[var(--info-soft)] text-[var(--info)]",
+  },
+  Shopping: {
+    icon: ShoppingBag,
+    className: "bg-[var(--primary-soft)] text-[var(--primary)]",
+  },
+  Bills: {
+    icon: ReceiptText,
+    className: "bg-[var(--danger-soft)] text-[var(--danger)]",
+  },
+  Entertainment: {
+    icon: Clapperboard,
+    className: "bg-[var(--primary-soft)] text-[var(--primary)]",
+  },
+  Healthcare: {
+    icon: Heart,
+    className: "bg-[var(--danger-soft)] text-[var(--danger)]",
+  },
+  Education: {
+    icon: GraduationCap,
+    className: "bg-[var(--info-soft)] text-[var(--info)]",
+  },
+  Savings: {
+    icon: PiggyBank,
+    className: "bg-[var(--success-soft)] text-[var(--success)]",
+  },
+  Salary: {
+    icon: WalletCards,
+    className: "bg-[var(--success-soft)] text-[var(--success)]",
+  },
 };
 
 const getCategoryMeta = (category) =>
@@ -116,7 +140,7 @@ function RecurringTransactions() {
 
     const category = resolveCategory(
       formData.category,
-      formData.customCategory
+      formData.customCategory,
     );
 
     if (!category) {
@@ -137,8 +161,7 @@ function RecurringTransactions() {
 
     if (editingId) {
       const currentItem = items.find((item) => item.id === editingId);
-      payload.last_processed_date =
-        currentItem?.last_processed_date || null;
+      payload.last_processed_date = currentItem?.last_processed_date || null;
     }
 
     try {
@@ -192,7 +215,7 @@ function RecurringTransactions() {
       notifySuccess(
         `${result.generated_count} recurring transaction${
           result.generated_count === 1 ? "" : "s"
-        } generated.`
+        } generated.`,
       );
       loadItems();
     } catch (error) {
@@ -240,14 +263,13 @@ function RecurringTransactions() {
               <h2 className="text-base font-bold tracking-tight text-[var(--text)]">
                 {editingId ? "Update recurring item" : "Add recurring item"}
               </h2>
-              <p className="mt-1 text-sm text-[var(--muted-text)]">Create a repeating payment or deposit.</p>
+              <p className="mt-1 text-sm text-[var(--muted-text)]">
+                Create a repeating payment or deposit.
+              </p>
             </div>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 p-5"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4 p-5">
             <input
               required
               placeholder="Title"
@@ -298,19 +320,14 @@ function RecurringTransactions() {
                   ...formData,
                   category: e.target.value,
                   customCategory:
-                    e.target.value === "Other"
-                      ? formData.customCategory
-                      : "",
+                    e.target.value === "Other" ? formData.customCategory : "",
                 })
               }
               className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
             >
               <option value="">Category</option>
               {categories.map((category) => (
-                <option
-                  key={category}
-                  value={category}
-                >
+                <option key={category} value={category}>
                   {category}
                 </option>
               ))}
@@ -345,30 +362,49 @@ function RecurringTransactions() {
               <option value="yearly">Yearly</option>
             </select>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-              <input
-                required
-                type="date"
-                value={formData.start_date}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    start_date: e.target.value,
-                  })
-                }
-                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
-              />
-              <input
-                type="date"
-                value={formData.end_date}
-                min={formData.start_date}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    end_date: e.target.value,
-                  })
-                }
-                className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
-              />
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text)]">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
+
+                <input
+                  required
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      start_date: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--text)]">
+                  End Date{" "}
+                  <span className="text-[var(--muted-text)]">(Optional)</span>
+                </label>
+
+                <input
+                  type="date"
+                  value={formData.end_date}
+                  min={formData.start_date}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      end_date: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-2xl border border-[var(--card-border)] bg-[var(--input-bg)] px-4 py-3 text-sm outline-none transition focus:border-[#F97316] focus:ring-4 focus:ring-orange-500/10"
+                />
+
+                <p className="mt-1 text-xs text-[var(--muted-text)]">
+                  Leave empty if this recurring transaction should continue
+                  indefinitely.
+                </p>
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm font-bold text-[var(--text)]">
               <input
@@ -414,7 +450,9 @@ function RecurringTransactions() {
                 <h2 className="text-base font-bold tracking-tight text-[var(--text)]">
                   Upcoming Payments
                 </h2>
-                <p className="mt-1 text-sm text-[var(--muted-text)]">Next scheduled active occurrences.</p>
+                <p className="mt-1 text-sm text-[var(--muted-text)]">
+                  Next scheduled active occurrences.
+                </p>
               </div>
               <button
                 type="button"
@@ -429,131 +467,183 @@ function RecurringTransactions() {
             </div>
 
             <div className="p-4 sm:p-5">
-            {upcoming.length === 0 ? (
-              <EmptyState
-                icon={CalendarClock}
-                title="No upcoming payments"
-                description="Active recurring items will appear here."
-              />
-            ) : (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {upcoming.map((item) => {
-                  const category = getCategoryMeta(item.category);
-                  const CategoryIcon = category.icon;
-                  return (
-                  <div key={item.id} className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className={`shrink-0 rounded-xl p-2 ${category.className}`}><CategoryIcon size={17} aria-hidden="true" /></span>
-                        <div className="min-w-0"><p className="truncate font-bold text-[var(--text)]">
-                          {item.title}
-                        </p><p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted-text)]"><Calendar size={13} aria-hidden="true" />Due {formatDate(item.next_due_date)}</p></div>
-                      </div>
-                      <span
-                        className={`text-sm font-bold ${
-                          item.type === "income"
-                            ? "text-[var(--success)]"
-                            : "text-[var(--danger)]"
-                        }`}
+              {upcoming.length === 0 ? (
+                <EmptyState
+                  icon={CalendarClock}
+                  title="No upcoming payments"
+                  description="Active recurring items will appear here."
+                />
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {upcoming.map((item) => {
+                    const category = getCategoryMeta(item.category);
+                    const CategoryIcon = category.icon;
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-2xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-4 transition hover:-translate-y-0.5 hover:shadow-sm"
                       >
-                        {formatCurrency(item.amount)}
-                      </span>
-                    </div>
-                  </div>);
-                })}
-              </div>
-            )}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span
+                              className={`shrink-0 rounded-xl p-2 ${category.className}`}
+                            >
+                              <CategoryIcon size={17} aria-hidden="true" />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate font-bold text-[var(--text)]">
+                                {item.title}
+                              </p>
+                              <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--muted-text)]">
+                                <Calendar size={13} aria-hidden="true" />
+                                Due {formatDate(item.next_due_date)}
+                              </p>
+                            </div>
+                          </div>
+                          <span
+                            className={`text-sm font-bold ${
+                              item.type === "income"
+                                ? "text-[var(--success)]"
+                                : "text-[var(--danger)]"
+                            }`}
+                          >
+                            {formatCurrency(item.amount)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </AnimatedCard>
 
           <section aria-labelledby="recurring-items-title">
             <div className="mb-4 flex items-center gap-3">
-              <span className="rounded-xl bg-[var(--muted-bg)] p-2 text-[var(--primary)]"><Repeat size={18} aria-hidden="true" /></span>
-              <div><h2 id="recurring-items-title" className="text-base font-bold tracking-tight text-[var(--text)]">Recurring items</h2><p className="mt-0.5 text-sm text-[var(--muted-text)]">{items.length} scheduled {items.length === 1 ? "item" : "items"}</p></div>
-            </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.length === 0 ? (
-              <EmptyState
-                icon={Repeat}
-                title="No recurring items"
-                description="Create rent, salary, bills, or other repeating activity."
-                className="md:col-span-2 xl:col-span-3"
-              />
-            ) : (
-              items.map((item) => {
-                const category = getCategoryMeta(item.category);
-                const CategoryIcon = category.icon;
-                return (
-                <AnimatedCard
-                  key={item.id}
-                  className="min-w-0 overflow-hidden p-0"
+              <span className="rounded-xl bg-[var(--muted-bg)] p-2 text-[var(--primary)]">
+                <Repeat size={18} aria-hidden="true" />
+              </span>
+              <div>
+                <h2
+                  id="recurring-items-title"
+                  className="text-base font-bold tracking-tight text-[var(--text)]"
                 >
-                  <div className="flex items-start justify-between gap-3 border-b border-[var(--card-border)] px-5 py-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className={`shrink-0 rounded-2xl p-2.5 ${category.className}`}><CategoryIcon size={19} aria-hidden="true" /></span>
-                      <div className="min-w-0"><p className="truncate font-bold text-[var(--text)]">
-                        {item.title}
-                      </p>
-                      <p className="mt-1 text-xs capitalize text-[var(--muted-text)]">{item.category || "Uncategorized"}</p></div>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1.5 text-[11px] font-bold ${
-                        item.active
-                          ? "bg-[var(--success-soft)] text-[var(--success)]"
-                          : "bg-[var(--muted-bg)] text-[var(--muted-text)]"
-                      }`}
+                  Recurring items
+                </h2>
+                <p className="mt-0.5 text-sm text-[var(--muted-text)]">
+                  {items.length} scheduled{" "}
+                  {items.length === 1 ? "item" : "items"}
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {items.length === 0 ? (
+                <EmptyState
+                  icon={Repeat}
+                  title="No recurring items"
+                  description="Create rent, salary, bills, or other repeating activity."
+                  className="md:col-span-2 xl:col-span-3"
+                />
+              ) : (
+                items.map((item) => {
+                  const category = getCategoryMeta(item.category);
+                  const CategoryIcon = category.icon;
+                  return (
+                    <AnimatedCard
+                      key={item.id}
+                      className="min-w-0 overflow-hidden p-0"
                     >
-                      {item.active ? "Active" : "Paused"}
-                    </span>
-                  </div>
-                  <div className="space-y-4 p-5"><div className="flex items-end justify-between gap-3"><p
-                    className={`mt-4 text-2xl font-bold ${
-                      item.type === "income"
-                        ? "text-[var(--success)]"
-                        : "text-[var(--danger)]"
-                    }`}
-                  >
-                    {formatCurrency(item.amount)}
-                  </p><span className="rounded-full bg-[var(--primary-soft)] px-2.5 py-1.5 text-xs font-semibold text-[var(--primary)]">{titleCase(item.frequency)}</span></div>
-                  <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[var(--muted-bg)] p-3 text-xs"><span className="flex items-center gap-1.5 text-[var(--muted-text)]"><Calendar size={13} aria-hidden="true" />Starts {formatDate(item.start_date)}</span><span className="text-right text-[var(--muted-text)]">Ends {formatDate(item.end_date)}</span></div>
-                  <p className="text-xs text-[var(--muted-text)]">Last processed: {formatDate(item.last_processed_date)}</p>
-                  <div className="flex flex-wrap gap-2 border-t border-[var(--card-border)] pt-4">
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(item.id)}
-                      className="inline-flex items-center gap-2 bg-[var(--muted-bg)] px-3 py-2 text-xs font-bold text-[var(--text)] hover:bg-[var(--card-border)]"
-                    >
-                      {item.active ? (
-                        <Pause size={15} />
-                      ) : (
-                        <Play size={15} />
-                      )}
-                      {item.active ? "Pause" : "Resume"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(item)}
-                      className="rounded-xl border border-[var(--card-border)] p-2 text-[var(--muted-text)] transition hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
-                      aria-label={`Edit ${item.title}`}
-                      title="Edit recurring transaction"
-                    >
-                      <Edit3 size={17} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPendingDeleteId(item.id)}
-                      className="rounded-xl border border-rose-200 p-2 text-rose-600 transition hover:bg-rose-50"
-                      aria-label={`Delete ${item.title}`}
-                      title="Delete recurring transaction"
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </div></div>
-                </AnimatedCard>
-                );
-              })
-            )}
-          </div>
+                      <div className="flex items-start justify-between gap-3 border-b border-[var(--card-border)] px-5 py-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={`shrink-0 rounded-2xl p-2.5 ${category.className}`}
+                          >
+                            <CategoryIcon size={19} aria-hidden="true" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-bold text-[var(--text)]">
+                              {item.title}
+                            </p>
+                            <p className="mt-1 text-xs capitalize text-[var(--muted-text)]">
+                              {item.category || "Uncategorized"}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-1.5 text-[11px] font-bold ${
+                            item.active
+                              ? "bg-[var(--success-soft)] text-[var(--success)]"
+                              : "bg-[var(--muted-bg)] text-[var(--muted-text)]"
+                          }`}
+                        >
+                          {item.active ? "Active" : "Paused"}
+                        </span>
+                      </div>
+                      <div className="space-y-4 p-5">
+                        <div className="flex items-end justify-between gap-3">
+                          <p
+                            className={`mt-4 text-2xl font-bold ${
+                              item.type === "income"
+                                ? "text-[var(--success)]"
+                                : "text-[var(--danger)]"
+                            }`}
+                          >
+                            {formatCurrency(item.amount)}
+                          </p>
+                          <span className="rounded-full bg-[var(--primary-soft)] px-2.5 py-1.5 text-xs font-semibold text-[var(--primary)]">
+                            {titleCase(item.frequency)}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[var(--muted-bg)] p-3 text-xs">
+                          <span className="flex items-center gap-1.5 text-[var(--muted-text)]">
+                            <Calendar size={13} aria-hidden="true" />
+                            Starts {formatDate(item.start_date)}
+                          </span>
+                          <span className="text-right text-[var(--muted-text)]">
+                            Ends {formatDate(item.end_date)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--muted-text)]">
+                          Last processed: {formatDate(item.last_processed_date)}
+                        </p>
+                        <div className="flex flex-wrap gap-2 border-t border-[var(--card-border)] pt-4">
+                          <button
+                            type="button"
+                            onClick={() => handleToggle(item.id)}
+                            className="inline-flex items-center gap-2 bg-[var(--muted-bg)] px-3 py-2 text-xs font-bold text-[var(--text)] hover:bg-[var(--card-border)]"
+                          >
+                            {item.active ? (
+                              <Pause size={15} />
+                            ) : (
+                              <Play size={15} />
+                            )}
+                            {item.active ? "Pause" : "Resume"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(item)}
+                            className="rounded-xl border border-[var(--card-border)] p-2 text-[var(--muted-text)] transition hover:bg-[var(--muted-bg)] hover:text-[var(--text)]"
+                            aria-label={`Edit ${item.title}`}
+                            title="Edit recurring transaction"
+                          >
+                            <Edit3 size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingDeleteId(item.id)}
+                            className="rounded-xl border border-rose-200 p-2 text-rose-600 transition hover:bg-rose-50"
+                            aria-label={`Delete ${item.title}`}
+                            title="Delete recurring transaction"
+                          >
+                            <Trash2 size={17} />
+                          </button>
+                        </div>
+                      </div>
+                    </AnimatedCard>
+                  );
+                })
+              )}
+            </div>
           </section>
         </div>
       </div>

@@ -1,9 +1,9 @@
 import {
   Routes,
   Route,
-  Outlet
+  Outlet,
 } from "react-router-dom";
-import { useState } from "react";
+import { lazy, memo, Suspense, useCallback, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -12,19 +12,36 @@ import Sidebar from "./components/layout/Sidebar";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicRoute from "./components/auth/PublicRoute";
 
-import Dashboard from "./pages/Dashboard";
-import Transactions from "./pages/Transactions";
-import Budgets from "./pages/Budgets";
-import BudgetHistory from "./pages/BudgetHistory";
-import Goals from "./pages/Goals";
-import RecurringTransactions from "./pages/RecurringTransactions";
-import ForgotPassword from "./pages/ForgotPassword";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
-import Register from "./pages/Register";
-import ResetPassword from "./pages/ResetPassword";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const Budgets = lazy(() => import("./pages/Budgets"));
+const BudgetHistory = lazy(() => import("./pages/BudgetHistory"));
+const Goals = lazy(() => import("./pages/Goals"));
+const RecurringTransactions = lazy(() => import("./pages/RecurringTransactions"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Login = lazy(() => import("./pages/Login"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Register = lazy(() => import("./pages/Register"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
-function AppShell({
+function RouteLoadingFallback() {
+  return (
+    <div className="flex min-h-[280px] items-center justify-center px-4 py-8" role="status" aria-live="polite">
+      <span className="sr-only">Loading page</span>
+      <span className="loading-skeleton h-11 w-full max-w-sm rounded-2xl" aria-hidden="true" />
+    </div>
+  );
+}
+
+function PublicRouteContent({ children }) {
+  return (
+    <Suspense fallback={<RouteLoadingFallback />}>
+      {children}
+    </Suspense>
+  );
+}
+
+const AppShell = memo(function AppShell({
   mobileOpen,
   onMobileToggle,
   onSidebarToggle,
@@ -47,17 +64,28 @@ function AppShell({
           onMobileToggle={onMobileToggle}
         />
 
-        <Outlet />
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   );
-}
+});
 
 function App() {
   const [sidebarCollapsed, setSidebarCollapsed] =
     useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState("light");
+  const handleThemeToggle = useCallback(() => {
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
+  }, []);
+  const handleMobileToggle = useCallback(() => {
+    setMobileOpen((current) => !current);
+  }, []);
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed((current) => !current);
+  }, []);
 
   return (
     <div
@@ -78,10 +106,10 @@ function App() {
 
       <Routes>
         <Route element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/login" element={<PublicRouteContent><Login /></PublicRouteContent>} />
+          <Route path="/register" element={<PublicRouteContent><Register /></PublicRouteContent>} />
+          <Route path="/forgot-password" element={<PublicRouteContent><ForgotPassword /></PublicRouteContent>} />
+          <Route path="/reset-password/:token" element={<PublicRouteContent><ResetPassword /></PublicRouteContent>} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
@@ -91,17 +119,9 @@ function App() {
                 theme={theme}
                 mobileOpen={mobileOpen}
                 sidebarCollapsed={sidebarCollapsed}
-                onThemeToggle={() =>
-                  setTheme((current) =>
-                    current === "dark" ? "light" : "dark"
-                  )
-                }
-                onMobileToggle={() =>
-                  setMobileOpen((current) => !current)
-                }
-                onSidebarToggle={() =>
-                  setSidebarCollapsed((current) => !current)
-                }
+                onThemeToggle={handleThemeToggle}
+                onMobileToggle={handleMobileToggle}
+                onSidebarToggle={handleSidebarToggle}
               />
             )}
           >
